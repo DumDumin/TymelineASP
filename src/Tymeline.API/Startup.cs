@@ -28,6 +28,7 @@ namespace Tymeline.API
         {
 
             services.AddScoped<ITimeService, TimeService>();
+            services.AddScoped<ITymelineService, TymelineService>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {

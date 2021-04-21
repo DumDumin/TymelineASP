@@ -10,7 +10,7 @@ namespace Tymeline.API.Controllers
     [ApiController]
     [Route("[controller]")]
     [Route("/util/time")]
-    public class TimeController : ControllerBase
+    public class TimeController : Controller
     {
 
 
@@ -24,8 +24,11 @@ namespace Tymeline.API.Controllers
         }
 
         [HttpGet]
-        public Int32 Get()
+        // [Route("time")]
+        // [Route("~/dumm/time")]
+        public Int32 GetTime()
         {
+        Console.WriteLine("5");
           return _timeService.GetTime();
         }
     }
