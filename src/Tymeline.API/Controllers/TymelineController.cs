@@ -33,9 +33,37 @@ namespace Tymeline.API.Controllers
 
         [HttpGet]
         [Route("id/{id}")]
-        public TymelineObject GetTymelineObjectsByKey(string id)
+        public ActionResult<TymelineObject> GetTymelineObjectsByKey(string id)
+        {   
+            ActionResult<TymelineObject> returnvalue;
+            try
+            {
+                TymelineObject obj = _timelineService.getById(id);
+                returnvalue = StatusCode(200,obj);
+                
+            }
+            catch (ArgumentException)
+            {
+                returnvalue = StatusCode(500);
+            }
+            catch(KeyNotFoundException)
+            {
+                returnvalue = StatusCode(204, null);
+            }
+            return returnvalue;
+            
+        }
+
+        private ActionResult<TymelineObject> produceTymelineRESTResponse(TymelineObject tymelineObject)
         {
-            return _timelineService.getById(id);
+            if (tymelineObject == null)
+            {
+                return StatusCode(204, null);
+            }
+            else
+            {
+                return StatusCode(200, tymelineObject);
+            }
         }
     }
 }

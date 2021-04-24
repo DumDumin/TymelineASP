@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Tymeline.API.Daos;
 
 namespace Tymeline.API
 {
@@ -26,7 +27,7 @@ namespace Tymeline.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            services.AddSingleton<ITymelineObjectDao,TymelineObjectDao>();
             services.AddScoped<ITimeService, TimeService>();
             services.AddScoped<ITymelineService, TymelineService>();
             services.AddControllers();
