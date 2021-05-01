@@ -1,9 +1,14 @@
 using System.Collections.Generic;
-
+using Tymeline.API.Daos;
 
 public class TymelineService : ITymelineService{
+
+    ITymelineObjectDao _tymelineObjectDao;
+    public TymelineService(ITymelineObjectDao tymelineObjectDao){
+        _tymelineObjectDao = tymelineObjectDao;
+    }
     public List<TymelineObject> getAll(){
-        return null;
+        return _tymelineObjectDao.getAll();
     }
 
     public TymelineObject getById(string id){

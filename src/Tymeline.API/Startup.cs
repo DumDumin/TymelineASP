@@ -30,6 +30,7 @@ namespace Tymeline.API
             services.AddSingleton<ITymelineObjectDao,TymelineObjectDao>();
             services.AddScoped<ITimeService, TimeService>();
             services.AddScoped<ITymelineService, TymelineService>();
+            // services.AddScoped<IAuthService,A
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {

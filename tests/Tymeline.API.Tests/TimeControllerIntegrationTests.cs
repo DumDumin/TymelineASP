@@ -39,14 +39,7 @@ namespace Tymeline.API.Tests
                     services.AddScoped<ITimeService>(s => _timeService.Object);
                 });
             }).CreateClient();  
-            
-
-
         }
-
-
-
-
 
         
         [TestCase("https://localhost:5001","/weatherforecast")]
