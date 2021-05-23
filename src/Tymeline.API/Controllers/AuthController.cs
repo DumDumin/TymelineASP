@@ -4,9 +4,11 @@ using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 
 namespace Tymeline.API.Controllers
 {
@@ -33,24 +35,57 @@ namespace Tymeline.API.Controllers
             try
             {   
                 IUser user = _authService.Register(credentials);
-                return StatusCode(201, user);
+                return StatusCode(201, JsonConvert.SerializeObject(user));
             }
             catch (System.ArgumentException)
             {
-                return StatusCode(200);
+                return StatusCode(400,"");
             }
             catch (FormatException)
             {
-                return StatusCode(400);
+                return StatusCode(400,"");
             }
         }
 
         [HttpGet]
         [Route("users")]
-        public ActionResult<Int16> ListUsers()
+        public ActionResult<List<IUser>> ListUsers()
         {
-            return StatusCode(200,0);
+            List<IUser> users = _authService.getUsers();
+            return StatusCode(200,users);
         }
+
+        [HttpPost]
+        [Route("login")]
+        public ActionResult<IUser> Login(UserCredentials credentials)
+        {
+            try
+            {
+            IUser user = _authService.Login(credentials);
+            if(user != null){
+
+                // TODO DOMAIN NEEDS TO BE SET BY ENV VARIABLE, just like path in launch setting
+                CookieOptions opt = new CookieOptions();
+                opt.Domain = "localhost";
+                opt.HttpOnly=true;
+                opt.Secure=true;
+                opt.SameSite=SameSiteMode.Strict;
+                opt.MaxAge=TimeSpan.FromHours(12);
+                Response.Cookies.Append("jwt",_authService.CreateJWT(user),opt);
+                Response.Cookies.Append("asd","testa",opt);
+                return StatusCode(201, user);
+            }
+            else {
+                return StatusCode(400, null);
+            }
+                
+            }
+            catch (System.Exception)
+            {
+                return StatusCode(401, null);
+            }
            
+
+        }           
     }
 }

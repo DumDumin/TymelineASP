@@ -25,6 +25,14 @@ namespace Tymeline.API.Tests
         {   
             _timelineObjectDao.Setup(s => s.getAll()).Returns(new List<TymelineObject>());
             Assert.IsInstanceOf<List<TymelineObject>>(_timelineService.getAll());
-        } 
+        }
+
+        [Test]
+        public void TestGetSome(){
+            // _timelineObjectDao.Object.
+        }
+
+
+
     }
 }

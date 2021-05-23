@@ -4,30 +4,36 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 
+
 public class User : IUser
 {
+    
     public User(){
-
     }
-    public User( string mail, int loggedIn){
+    public User( string mail, int createdAt, string passwd ){
+        passwordHasher = new PasswordHasher();
         Mail = mail;
-        LoggedInAt = loggedIn;
+        CreatedAt = createdAt;
         UserId = Mail.GetHashCode();
-    }
-    public int UserId { get ; set; }
-    public string Mail {get; set;}
-    public int LoggedInAt { get ; set; }
+        passwordHash = passwd;
 
-    public JwtSecurityToken createJwt(SigningCredentials credentials)
-    {
-        
-        // create claims management to get available claims injected in here!
-        JwtHeader header =  new JwtHeader(credentials);
-        List<Claim> claims = new List<Claim>();
-    
-        claims.Add( new Claim(JwtRegisteredClaimNames.Sub, UserId.ToString()));
-        claims.Add( new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
-    
-        return new JwtSecurityToken(issuer:"tymeline.de",audience:"tymeline.de",claims,signingCredentials:credentials);
     }
+
+    public static User toUser(UserRegisterCredentials credentials){
+        IPasswordHasher passwordHasher = new PasswordHasher();
+        var password = passwordHasher.Hash(credentials.Password);
+        return new User( credentials.Email,  credentials.CreatedAt, password);
+    }
+
+    private PasswordHasher passwordHasher {get;}
+    public int UserId { get ; set; }
+    private string passwordHash {get;}
+    public string Mail {get; set;}
+    public int CreatedAt { get ; set; }
+
+    public bool verifyPassword(string passwd){
+        var (verified, needsUpgrade) = passwordHasher.Check(passwordHash, passwd);
+        return verified;
+    }
+    
 }

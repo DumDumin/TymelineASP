@@ -10,5 +10,20 @@ namespace Tymeline.API.Daos
         public List<TymelineObject> getAll(){
             return null;
         }
+
+        public TymelineObject getById(string id)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public List<TymelineObject> getByStart(int after, int before)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public List<TymelineObject> getByEnd(int after, int before)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
