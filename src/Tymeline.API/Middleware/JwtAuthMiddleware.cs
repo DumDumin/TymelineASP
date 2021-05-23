@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -29,7 +30,7 @@ using System.Threading.Tasks;
             await _next(context);
         }
 
-        private void attachUserToContext(HttpContext context, IAuthService userService, string token)
+        private void attachUserToContext(HttpContext context, IAuthService authService, string token)
         {
             try
             {
@@ -49,7 +50,8 @@ using System.Threading.Tasks;
                 var userId = int.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
 
                 // attach user to context on successful jwt validation
-                context.Items["User"] = userService.GetById(userId);
+                // context.User.AddIdentity(new ClaimsIdentity())
+                context.Items["User"] = authService.GetById(userId);
             }
             catch
             {

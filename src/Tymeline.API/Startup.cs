@@ -27,8 +27,9 @@ namespace Tymeline.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+            services.AddSingleton<UtilService>();
+            services.AddSingleton<IAuthDao,AuthDao>();
             services.AddSingleton<ITymelineObjectDao,TymelineObjectDao>();
             services.AddScoped<ITimeService, TimeService>();
             services.AddScoped<ITymelineService, TymelineService>();
@@ -57,7 +58,7 @@ namespace Tymeline.API
             app.UseRouting();
 
             app.UseMiddleware<JwtMiddleware>();
-            app.UseAuthorization();
+            // app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

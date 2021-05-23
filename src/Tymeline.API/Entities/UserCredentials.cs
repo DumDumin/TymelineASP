@@ -1,21 +1,22 @@
-public class UserCredentials
+public class UserCredentials:IUserCredentials
 {
-public string Email{
-    get;
-    set;
-}
- public string Password {
-    get;
-    set;
-}
+
+    public UserCredentials(string email, string password){
+        Email = email;
+        Password = password;
+    }
+    public string Email{
+        get;
+        set;
+    }
+    public string Password {
+        get;
+        set;
+    }
+    public bool complete(){
+        return !Email.Equals(null) &&  !Password.Equals(null);
+    }
+
+
     
 } 
-
-public class UserRegisterCredentials: UserCredentials{
-
-public int CreatedAt{
-    get;
-    set;
-}
-
-}

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -11,6 +12,7 @@ namespace Tymeline.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize]
     public class TymelineController : Controller
     {
 
@@ -18,11 +20,11 @@ namespace Tymeline.API.Controllers
         private readonly ILogger _logger;
         private readonly ITymelineService _timelineService;
 
-        public TymelineController(ILogger<TimeController> logger, ITymelineService timelineService)
+        public TymelineController( ITymelineService timelineService)
         {
-            _logger = logger;
             _timelineService = timelineService;
         }
+
 
         [HttpGet]
         [Route("all")]
@@ -30,7 +32,7 @@ namespace Tymeline.API.Controllers
         {
             return _timelineService.getAll();
         }
-
+        
         [HttpGet]
         [Route("id/{id}")]
         public ActionResult<TymelineObject> GetTymelineObjectsByKey(string id)
@@ -54,16 +56,6 @@ namespace Tymeline.API.Controllers
             
         }
 
-        private ActionResult<TymelineObject> produceTymelineRESTResponse(TymelineObject tymelineObject)
-        {
-            if (tymelineObject == null)
-            {
-                return StatusCode(204, null);
-            }
-            else
-            {
-                return StatusCode(200, tymelineObject);
-            }
-        }
+
     }
 }

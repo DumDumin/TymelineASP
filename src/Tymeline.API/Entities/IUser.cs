@@ -3,7 +3,9 @@ public interface IUser
     int UserId { get ; set; }
     string Mail {get; set;}
 
-    public bool verifyPassword(string passwd);
+    IUser updatePassword(string password);
+
+    bool verifyPassword(string passwd);
 
 
 }

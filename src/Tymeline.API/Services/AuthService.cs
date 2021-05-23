@@ -9,10 +9,13 @@ using Microsoft.IdentityModel.Tokens;
 public class AuthService : IAuthService
 {   
     private IAuthDao AuthDao;
+
+    private UtilService _utilService;
     private readonly AppSettings _appSettings;
-    public AuthService(IAuthDao authDao,IOptions<AppSettings> appSettings){
+    public AuthService(IAuthDao authDao,UtilService utilService, IOptions<AppSettings> appSettings){
         AuthDao = authDao;
         _appSettings = appSettings.Value;
+        _utilService = utilService;
     }
 
     public SigningCredentials GetSigningCredentials()
@@ -25,24 +28,39 @@ public class AuthService : IAuthService
         throw new System.NotImplementedException();
     }
 
-    public IUser Login(UserCredentials credentials)
+
+    public IUser Login(IUserCredentials credentials)
     {
-        throw new System.NotImplementedException();
+        try
+        {
+            if (credentials.complete())
+            {
+                IUser user = AuthDao.getUserById(credentials.Email.GetHashCode()) ?? throw new ArgumentNullException();
+                if (user.verifyPassword(credentials.Password)){
+                    return user;
+                }        
+            }
+            return null;
+          }
+        catch (System.Exception)
+        {
+            return null;
+        }
+        
     }
 
-    public IUser Register(UserRegisterCredentials credentials)
+    public IUser Register(IUserCredentials credentials)
     {
-        throw new System.NotImplementedException();
-    }
-
-    public string createPassword(User BaseUser)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public bool verifyPassword(string Password, User BaseUser)
-    {
-        throw new System.NotImplementedException();
+        if (credentials.complete() && _utilService.IsValidEmail(credentials.Email).Equals(true))
+        {
+            IUser user = User.CredentialsToUser(credentials);
+            if (!AuthDao.GetUsers().ContainsKey(user.UserId))
+            {
+                AuthDao.Register(user);
+                return user;
+            }
+        }
+        return null;
     }
 
     public string CreateJWT(IUser user)
@@ -52,10 +70,16 @@ public class AuthService : IAuthService
         
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[] { new Claim("id", user.UserId.ToString()) }),
+            Subject = new ClaimsIdentity(new[] { 
+                // new Claim("id", user.UserId.ToString()),
+                new Claim(ClaimTypes.Actor,user.UserId.ToString())
+                }),
+            Audience = _appSettings.Hostname,
+            Issuer = _appSettings.Hostname,
             Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
+        
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
@@ -67,6 +91,18 @@ public class AuthService : IAuthService
 
     public IUser GetById(int id)
     {
-        throw new NotImplementedException();
+        return AuthDao.getUserById(id);
     }
+
+    public void RemoveUser(IUser user)
+    {
+        AuthDao.RemoveUser(user);
+    }
+
+    public IUser ChangePassword(IUser user, string passwd)
+    {
+       return AuthDao.ChangePassword(user,passwd);
+    }
+
+
 }

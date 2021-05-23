@@ -13,10 +13,12 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using System.Net;
 
 namespace Tymeline.API.Tests
 {
-
+    [TestFixture]
+    [Category("HTTP")]
     public class TymelineControllerIntegrationTest : OneTimeSetUpAttribute
     {
         private WebApplicationFactory<Startup> _factory;
@@ -120,7 +122,9 @@ namespace Tymeline.API.Tests
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/id/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             // ugly testing code . fix this!
-            Assert.AreEqual(mockTymelineReturnById(key),JsonConvert.DeserializeObject<TymelineObject>(responseString));
+            Assert.AreEqual(HttpStatusCode.OK,response.StatusCode);
+            Assert.AreEqual(mockTymelineReturnById(key),
+            JsonConvert.DeserializeObject<TymelineObject>(responseString));
         }
 
         [Test]

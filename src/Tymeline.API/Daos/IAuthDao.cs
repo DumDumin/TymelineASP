@@ -2,9 +2,17 @@
 using System.Collections.Generic;
 
 public interface IAuthDao{
-    bool register(UserRegisterCredentials credentials);
+    IUser Register(IUser user);
 
-    IUser Login(UserCredentials credentials);
+    IEnumerable<string> GetUserPermissions(IUser user);
 
+    Dictionary<int,IUser> GetUsers();
+
+    IUser getUserById(int id);
+
+    void RemoveUser(IUser user);
+
+    IUser ChangePassword(IUser user, string password);
+    
 
 }

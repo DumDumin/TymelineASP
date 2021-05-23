@@ -29,22 +29,23 @@ namespace Tymeline.API.Controllers
 
         [HttpPost]
         [Route("register")]
-        public ActionResult<IUser> register(UserRegisterCredentials credentials)
+        public ActionResult<IUser> register(UserCredentials credentials)
         {   
             
             try
             {   
                 IUser user = _authService.Register(credentials);
+                if(user!=null){
                 return StatusCode(201, JsonConvert.SerializeObject(user));
+
+                }
+                return StatusCode(400,"");
             }
-            catch (System.ArgumentException)
+            catch (System.Exception)
             {
                 return StatusCode(400,"");
             }
-            catch (FormatException)
-            {
-                return StatusCode(400,"");
-            }
+           
         }
 
         [HttpGet]
