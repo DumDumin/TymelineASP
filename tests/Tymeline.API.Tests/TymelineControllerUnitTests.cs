@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Http;
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Principal;
+using Microsoft.Extensions.Options;
 
 namespace Tymeline.API.Tests
 {
@@ -28,25 +29,23 @@ namespace Tymeline.API.Tests
         private WebApplicationFactory<Startup> _factory;
         private HttpClient _client;
         private Moq.Mock<ITymelineService> _tymelineService;
+        private Moq.Mock<IAuthService> _authService;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
             _factory = new WebApplicationFactory<Startup>();
             _tymelineService = new Moq.Mock<ITymelineService>();
+            _authService = new Mock<IAuthService>();
             
             _client = _factory.WithWebHostBuilder(builder =>
             {   
-                var b = new ConfigurationBuilder();
-        
-                
                 builder.ConfigureTestServices(services => 
-                {
+                {   
                     services.AddScoped<ITymelineService>(s => _tymelineService.Object);
- 
+                    services.AddScoped<IAuthService>(s => _authService.Object);
                 });
-            }).CreateClient();
-            
+            }).CreateClient();    
         }
 
         [SetUp]
@@ -168,9 +167,10 @@ namespace Tymeline.API.Tests
         }
 
 
-          [Test]
+        [Test]
         public async Task Test_TymelineById_returns_500_forBackendError()
         {
+            // _authService.Setup(auth => auth.GetById)
             string key = "99";
             
             // array.Add( new TymelineObject("99",500+(random.Next() % 5000),new Content(RandomString(12)),10000+(random.Next() % 5000),RandomBool(),RandomBool()));

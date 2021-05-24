@@ -87,6 +87,14 @@ namespace Tymeline.API.Controllers
             }
            
 
-        }           
+        }  
+
+
+        [Authorize]
+        [HttpGet]
+        [Route("testjwt")]
+        public ActionResult<string> TestJWT(){
+            return StatusCode(200,User.Claims.ToString());
+        }         
     }
 }

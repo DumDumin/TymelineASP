@@ -1,11 +1,5 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 
 
@@ -26,7 +20,7 @@ using System.Threading.Tasks;
 
         public async Task Invoke(HttpContext context, IAuthService userService)
         {
-            context.Items["User"] = new User("test@testmail.de","testpasswd");
+            context.Items["User"] = new User(_authTestSettings.userEmail, _authTestSettings.userPassword);
 
             await _next(context);
         }

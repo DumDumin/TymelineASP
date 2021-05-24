@@ -67,7 +67,13 @@ public class AuthService : IAuthService
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-        
+        var claims = new Claim[]  
+            {  
+                        new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),  
+                        new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),  
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),  
+                        new Claim(JwtRegisteredClaimNames.Iat, utcNow.ToString())  
+            };  
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[] { 

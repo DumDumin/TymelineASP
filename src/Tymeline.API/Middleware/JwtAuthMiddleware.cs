@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 
 
-    public class JwtMiddleware:IAuthMiddleware
+    public class JwtMiddleware: IAuthMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly AppSettings _appSettings;
@@ -21,12 +21,12 @@ using System.Threading.Tasks;
             _appSettings = appSettings.Value;
         }
 
-        public async Task Invoke(HttpContext context, IAuthService userService)
+        public async Task Invoke(HttpContext context, IAuthService authService)
         {
             var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
             if (token != null)
-                attachUserToContext(context, userService, token);
+                attachUserToContext(context, authService, token);
             await _next(context);
         }
 
@@ -48,6 +48,7 @@ using System.Threading.Tasks;
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
                 var userId = int.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
+
                 // attach user to context on successful jwt validation
                 // context.User.AddIdentity(new ClaimsIdentity())
                 context.Items["User"] = authService.GetById(userId);

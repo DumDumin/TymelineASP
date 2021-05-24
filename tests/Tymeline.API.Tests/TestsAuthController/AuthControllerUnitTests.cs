@@ -16,6 +16,7 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
 
 namespace Tymeline.API.Tests
 {
@@ -272,6 +273,28 @@ namespace Tymeline.API.Tests
             var responseObject = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
             Assert.AreEqual(400,(int)statusCode);
+        }
+
+
+        [Test]
+        public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_JWT_Expect_Sucess(){
+            UserCredentials credentials = new UserCredentials("test5@email.de","hunter12");
+
+            JsonContent content =  JsonContent.Create(credentials);
+           
+            
+            Uri uriLogin = new Uri("https://localhost:5001/auth/login");
+            var response = await _client.PostAsync(uriLogin.AbsoluteUri,content);
+           
+            IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
+            Uri uriTest = new Uri("https://localhost:5001/auth/testjwt");
+            string jwt = cookies.First(s => s.StartsWith("jwt"));
+            jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=","");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",jwt);
+            var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
+            var responseObject = await responseTest.Content.ReadAsStringAsync();
+            var statusCode = responseTest.StatusCode;
+            Assert.AreEqual(HttpStatusCode.OK,statusCode);
         }
           
     }
