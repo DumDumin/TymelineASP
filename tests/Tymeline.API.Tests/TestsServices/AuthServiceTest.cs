@@ -87,7 +87,6 @@ namespace Tymeline.API.Tests
 
         JwtSecurityToken MockAuthMiddleware(string token){
             
-            
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
             tokenHandler.ValidateToken(token, new TokenValidationParameters
@@ -103,7 +102,6 @@ namespace Tymeline.API.Tests
             }, out SecurityToken validatedToken);
 
             var jwtToken = (JwtSecurityToken)validatedToken;
-            
             var userId = jwtToken.Actor;
             return jwtToken;
         }
@@ -254,8 +252,7 @@ namespace Tymeline.API.Tests
             var jwt = MockAuthMiddleware(jwtString);
             Assert.NotNull(jwt.Actor);
             Assert.NotNull(jwt);
-            Assert.AreEqual(user.UserId,jwt.Actor);
+            Assert.AreEqual(user.UserId.ToString(),jwt.Actor);
         }
-
     }
 }

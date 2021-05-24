@@ -48,17 +48,20 @@ namespace Tymeline.API
         {
             if (env.IsDevelopment())
             {
+                // app.UseMiddleware<TestAuthenticationMiddleware>();
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Tymeline.API v1"));
+            }
+            else{
+                // app.UseMiddleware<JwtMiddleware>();
             }
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            app.UseMiddleware<JwtMiddleware>();
-            // app.UseAuthorization();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

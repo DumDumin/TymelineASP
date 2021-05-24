@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -12,7 +13,7 @@ namespace Tymeline.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize]
+    // [Authorize]
     public class TymelineController : Controller
     {
 
@@ -20,7 +21,7 @@ namespace Tymeline.API.Controllers
         private readonly ILogger _logger;
         private readonly ITymelineService _timelineService;
 
-        public TymelineController( ITymelineService timelineService)
+        public TymelineController( ITymelineService timelineService )
         {
             _timelineService = timelineService;
         }
@@ -37,22 +38,21 @@ namespace Tymeline.API.Controllers
         [Route("id/{id}")]
         public ActionResult<TymelineObject> GetTymelineObjectsByKey(string id)
         {   
-            ActionResult<TymelineObject> returnvalue;
+            
             try
             {
                 TymelineObject obj = _timelineService.getById(id);
-                returnvalue = StatusCode(200,obj);
+                return StatusCode(200,obj);
                 
             }
             catch (ArgumentException)
             {
-                returnvalue = StatusCode(500);
+                return  StatusCode(500);
             }
             catch(KeyNotFoundException)
             {
-                returnvalue = StatusCode(204, null);
+                return StatusCode(204, null);
             }
-            return returnvalue;
             
         }
 
