@@ -63,37 +63,30 @@ public class AuthService : IAuthService
         return null;
     }
 
-    public string CreateJWT(IUser user)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-        var claims = new Claim[]  
-            {  
-                        new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),  
-                        new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),  
-                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),  
-                        new Claim(JwtRegisteredClaimNames.Iat, utcNow.ToString())  
-            };  
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[] { 
-                // new Claim("id", user.UserId.ToString()),
-                new Claim(ClaimTypes.Actor,user.UserId.ToString())
-                }),
-            Audience = _appSettings.Hostname,
-            Issuer = _appSettings.Hostname,
-            Expires = DateTime.UtcNow.AddHours(1),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
+    // public string CreateJWT(IUser user)
+    // {
+    //     var tokenHandler = new JwtSecurityTokenHandler();
+    //     var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+    //     var tokenDescriptor = new SecurityTokenDescriptor
+    //     {
+    //         Subject = new ClaimsIdentity(new[] { 
+    //             // new Claim("id", user.UserId.ToString()),
+    //             new Claim(ClaimTypes.Actor,user.UserId.ToString())
+    //             }),
+    //         Audience = _appSettings.Hostname,
+    //         Issuer = _appSettings.Hostname,
+    //         Expires = DateTime.UtcNow.AddHours(1),
+    //         SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+    //     };
         
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
-    }
+    //     var token = tokenHandler.CreateToken(tokenDescriptor);
+    //     return tokenHandler.WriteToken(token);
+    // }
 
-    public bool verifyJWT(string jwt, IUser user)
-    {
-        throw new System.NotImplementedException();
-    }
+    // public bool verifyJWT(string jwt, IUser user)
+    // {
+    //     throw new System.NotImplementedException();
+    // }
 
     public IUser GetById(int id)
     {

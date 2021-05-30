@@ -29,6 +29,8 @@ namespace Tymeline.API.Tests
         private HttpClient _client;
         private Moq.Mock<IAuthService> _authService;
 
+        private Mock<IJwtService> _jwtService;
+
         private UtilService _utilService;
         AppSettings _appSettings;
         Dictionary<int,IUser> userdict;
@@ -46,7 +48,7 @@ namespace Tymeline.API.Tests
             {
                 builder.ConfigureTestServices(services => 
                 {   
-                    
+                    services.AddSingleton<IJwtService,JwtService>();      
                     services.AddScoped<IAuthService>(s => _authService.Object);
                     services.AddSingleton<UtilService>(s => _utilService);
                 });
@@ -54,7 +56,6 @@ namespace Tymeline.API.Tests
             _authService.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials cc) =>  MockRegister(cc));
             _authService.Setup(s => s.getUsers()).Returns(() =>  MockGetUsers());
             _authService.Setup(s => s.Login(It.IsAny<UserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
-            _authService.Setup(s => s.CreateJWT(It.IsAny<IUser>())).Returns((IUser user) => MockJWT(user));
             _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
         }
 
@@ -277,7 +278,7 @@ namespace Tymeline.API.Tests
 
 
         [Test]
-        public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_JWT_Expect_Sucess(){
+        public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_JWT_Expect_Success(){
             UserCredentials credentials = new UserCredentials("test5@email.de","hunter12");
 
             JsonContent content =  JsonContent.Create(credentials);
@@ -288,6 +289,28 @@ namespace Tymeline.API.Tests
            
             IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
             Uri uriTest = new Uri("https://localhost:5001/auth/testjwt");
+            string jwt = cookies.First(s => s.StartsWith("jwt"));
+            jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=","");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",jwt);
+            var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
+            var responseObject = await responseTest.Content.ReadAsStringAsync();
+            var statusCode = responseTest.StatusCode;
+            Assert.AreEqual(HttpStatusCode.OK,statusCode);
+        }
+
+
+         [Test]
+        public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_Authentication_expect_Claims(){
+            UserCredentials credentials = new UserCredentials("test5@email.de","hunter12");
+
+            JsonContent content =  JsonContent.Create(credentials);
+           
+            
+            Uri uriLogin = new Uri("https://localhost:5001/auth/login");
+            var response = await _client.PostAsync(uriLogin.AbsoluteUri,content);
+           
+            IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
+            Uri uriTest = new Uri("https://localhost:5001/auth/userInfo");
             string jwt = cookies.First(s => s.StartsWith("jwt"));
             jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=","");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",jwt);

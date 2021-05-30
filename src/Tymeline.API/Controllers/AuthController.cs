@@ -1,17 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
+
 using Newtonsoft.Json;
 
 namespace Tymeline.API.Controllers
 {
+
     [ApiController]
     [Route("[controller]")]
     public class AuthController : Controller
@@ -21,10 +19,13 @@ namespace Tymeline.API.Controllers
         private readonly ILogger _logger;
         private readonly IAuthService _authService;
 
-        public AuthController(ILogger<AuthController> logger, IAuthService authService)
+        private readonly IJwtService _JwtService;
+
+        public AuthController(ILogger<AuthController> logger, IAuthService authService, IJwtService jwtService)
         {
             _logger = logger;
             _authService = authService;
+            _JwtService = jwtService;
         }
 
         [HttpPost]
@@ -72,7 +73,7 @@ namespace Tymeline.API.Controllers
                 opt.Secure=true;
                 opt.SameSite=SameSiteMode.Strict;
                 opt.MaxAge=TimeSpan.FromHours(12);
-                Response.Cookies.Append("jwt",_authService.CreateJWT(user),opt);
+                Response.Cookies.Append("jwt",_JwtService.createJwt(user),opt);
                 Response.Cookies.Append("asd","testa",opt);
                 return StatusCode(201, user);
             }
@@ -95,6 +96,14 @@ namespace Tymeline.API.Controllers
         [Route("testjwt")]
         public ActionResult<string> TestJWT(){
             return StatusCode(200,User.Claims.ToString());
-        }         
+        }
+
+        [HttpGet]
+        [Route("userInfo")]
+        public ActionResult<string> TestUser(){
+            return StatusCode(200,User.Claims.ToString());
+        }
+
+
     }
 }

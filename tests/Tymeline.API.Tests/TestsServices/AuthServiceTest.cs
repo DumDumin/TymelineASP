@@ -22,6 +22,7 @@ namespace Tymeline.API.Tests
         Dictionary<int,IUser> userdict;
 
         UtilService _utilService;
+        IJwtService _jwtService;
         AppSettings _appSettings;
 
         [OneTimeSetUp]
@@ -32,7 +33,7 @@ namespace Tymeline.API.Tests
             _authDao = new Moq.Mock<IAuthDao>();
             _utilService = new UtilService();
             _authService = new AuthService(_authDao.Object, _utilService, _appSettingsOptions);
-            
+            _jwtService = new JwtService(_appSettingsOptions);
             _authDao.Setup(s => s.getUserById(It.IsAny<int>())).Returns((int id) => MockGetUserById(id));
             _authDao.Setup(s => s.GetUsers()).Returns(() => MockGetUser());
             _authDao.Setup(s => s.Register(It.IsAny<IUser>())).Returns((IUser user) => MockRegister(user));
@@ -102,7 +103,6 @@ namespace Tymeline.API.Tests
             }, out SecurityToken validatedToken);
 
             var jwtToken = (JwtSecurityToken)validatedToken;
-            var userId = jwtToken.Actor;
             return jwtToken;
         }
 
@@ -248,11 +248,8 @@ namespace Tymeline.API.Tests
             string passwd = "hunter13";
             IUserCredentials credentials = new UserCredentials(mail,passwd);
             IUser user = User.CredentialsToUser(credentials);
-            var jwtString = _authService.CreateJWT(user);
-            var jwt = MockAuthMiddleware(jwtString);
-            Assert.NotNull(jwt.Actor);
-            Assert.NotNull(jwt);
-            Assert.AreEqual(user.UserId.ToString(),jwt.Actor);
+            var jwtString = _jwtService.createJwt(user);
+            Assert.NotNull(jwtString);
         }
     }
 }

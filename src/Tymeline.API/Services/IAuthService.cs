@@ -14,6 +14,6 @@ public interface IAuthService
     IUser GetById(int id);
     // string createPassword(User BaseUser);
     // bool verifyPassword(string Password,User BaseUser);
-    string CreateJWT(IUser user);
-    bool verifyJWT(string jwt, IUser user);
+    // string CreateJWT(IUser user);
+    // bool verifyJWT(string jwt, IUser user);
 }

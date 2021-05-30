@@ -1,5 +1,7 @@
+using System.IdentityModel.Tokens.Jwt;
+
 public interface IJwtService{
 
     string createJwt(IUser user);
-    IUser verifyJwt(string jwt);
+    JwtSecurityToken verifyJwt(string jwt);
 }
