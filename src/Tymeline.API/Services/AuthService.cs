@@ -40,11 +40,11 @@ public class AuthService : IAuthService
                     return user;
                 }        
             }
-            return null;
+            throw new ArgumentException();
           }
         catch (System.Exception)
         {
-            return null;
+            throw new ArgumentException();
         }
         
     }
@@ -60,33 +60,9 @@ public class AuthService : IAuthService
                 return user;
             }
         }
-        return null;
+        throw new ArgumentException();
     }
 
-    // public string CreateJWT(IUser user)
-    // {
-    //     var tokenHandler = new JwtSecurityTokenHandler();
-    //     var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-    //     var tokenDescriptor = new SecurityTokenDescriptor
-    //     {
-    //         Subject = new ClaimsIdentity(new[] { 
-    //             // new Claim("id", user.UserId.ToString()),
-    //             new Claim(ClaimTypes.Actor,user.UserId.ToString())
-    //             }),
-    //         Audience = _appSettings.Hostname,
-    //         Issuer = _appSettings.Hostname,
-    //         Expires = DateTime.UtcNow.AddHours(1),
-    //         SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-    //     };
-        
-    //     var token = tokenHandler.CreateToken(tokenDescriptor);
-    //     return tokenHandler.WriteToken(token);
-    // }
-
-    // public bool verifyJWT(string jwt, IUser user)
-    // {
-    //     throw new System.NotImplementedException();
-    // }
 
     public IUser GetById(int id)
     {

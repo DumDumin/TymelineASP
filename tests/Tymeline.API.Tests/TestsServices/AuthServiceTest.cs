@@ -64,7 +64,7 @@ namespace Tymeline.API.Tests
         IUser MockRegister(IUser user){
             // registering a user never fails!
             if (userdict.ContainsKey(user.UserId)){
-                return null;
+                throw new ArgumentException();
             }
             else{
                 userdict.Add(user.UserId, user);
@@ -83,30 +83,13 @@ namespace Tymeline.API.Tests
 
         IUser MockGetUserById(int id){
             
-            return userdict.GetValueOrDefault(id,null);
+            IUser user;
+            userdict.TryGetValue(id,out user);
+            if (user != null){
+                return user;
+            }
+            throw new ArgumentException();
         }
-
-        JwtSecurityToken MockAuthMiddleware(string token){
-            
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-            tokenHandler.ValidateToken(token, new TokenValidationParameters
-            {
-                ValidIssuer = _appSettings.Hostname,
-                ValidAudience = _appSettings.Hostname,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
-                ClockSkew = TimeSpan.Zero
-            }, out SecurityToken validatedToken);
-
-            var jwtToken = (JwtSecurityToken)validatedToken;
-            return jwtToken;
-        }
-
-
 
         private Dictionary<int,IUser> createUserDict()
         {   
@@ -129,20 +112,18 @@ namespace Tymeline.API.Tests
             Assert.AreEqual(user.UserId,mail.GetHashCode());
         }
         [Test]
-        public void Test_Login_Given_Invalid_Credentials_Expect_NullUser(){
+        public void Test_Login_Given_Invalid_Credentials_Expect_ArgumentException(){
             string mail = "test15123@email.de";
             
             IUserCredentials credentials = new UserCredentials(mail,"hunter12");
-            IUser user = _authService.Login(credentials);
-            Assert.IsNull(user);
+            Assert.Throws<ArgumentException>(() => _authService.Login(credentials));
         }
 
         [Test]
-        public void Test_Login_Given_Invalid_Password_Expect_NullUser(){
+        public void Test_Login_Given_Invalid_Password_Expect_ArgumentException(){
             string mail = "test5@email.de";
             IUserCredentials credentials = new UserCredentials(mail,"hunter123");
-            IUser user = _authService.Login(credentials);
-            Assert.IsNull(user);
+            Assert.Throws<ArgumentException>(() => _authService.Login(credentials));
         }
 
     
@@ -174,41 +155,39 @@ namespace Tymeline.API.Tests
         public void Test_Register_Given_Invalid_Credentials_Expect_NullUser(){
             string mail = "test105email.de";
             IUserCredentials credentials = new UserCredentials(mail,"hunter13");
-            IUser user =_authService.Register(credentials);
-            Assert.IsNull(user);
+            Assert.Throws<ArgumentException>(() => _authService.Register(credentials));
         }
 
         [Test]
-        public void Test_Register_Given_Already_Registered_Credentials_Expect_NullUser(){
+        public void Test_Register_Given_Already_Registered_Credentials_Expect_ArgumentException(){
             string mail = "test5@email.de";
             IUserCredentials credentials = new UserCredentials(mail,"hunter13");
-            IUser user =_authService.Register(credentials);
-            Assert.IsNull(user);
+            
+            Assert.Throws<ArgumentException>(() => _authService.Register(credentials));
+            
         }
 
 
         [Test]
-        public void Test_Remove_Account_Expect_User_To_Not_Exist_After(){
+        public void Test_Remove_Account_Expect_ArgumentException(){
             string mail = "test5@email.de";
             string passwd ="hunter13";
             IUserCredentials creds = new UserCredentials(mail,passwd);
             var user = User.CredentialsToUser(creds);
             _authService.RemoveUser(user);
-            IUser shouldBeNull = _authService.GetById(user.UserId);
-            Assert.IsNull(shouldBeNull);
+            Assert.Throws<ArgumentException>(() => _authService.GetById(user.UserId));
         }
 
 
         [Test]
-        public void Test_Remove_Account_Idempotency(){
+        public void Test_Remove_Account_Twice_Expect_ArgumentException(){
             string mail = "test5@email.de";
             string passwd ="hunter13";
             IUserCredentials creds = new UserCredentials(mail,passwd);
             var user = User.CredentialsToUser(creds);
             _authService.RemoveUser(user);
             _authService.RemoveUser(user);
-            IUser shouldBeNull = _authService.GetById(user.UserId);
-            Assert.IsNull(shouldBeNull);
+           Assert.Throws<ArgumentException>(() => _authService.GetById(user.UserId));
         }
 
         [Test]

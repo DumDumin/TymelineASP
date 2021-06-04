@@ -45,7 +45,8 @@ namespace Tymeline.API.Tests
                     services.AddScoped<ITymelineService>(s => _tymelineService.Object);
                     services.AddScoped<IAuthService>(s => _authService.Object);
                 });
-            }).CreateClient();    
+            }).CreateClient();
+            _tymelineService.Setup(s => s.GetById(It.IsAny<string>())).Returns((string key) => mockTymelineReturnById(key));
         }
 
         [SetUp]
@@ -113,7 +114,7 @@ namespace Tymeline.API.Tests
         public async Task Test_TymelinegetAll_returnsValidJSON_forListTymelineObject()
         {   
             var array = setupTymelineList();
-            _tymelineService.Setup(s => s.getAll()).Returns(array); 
+            _tymelineService.Setup(s => s.GetAll()).Returns(array); 
             var response = await _client.GetAsync("https://localhost:5001/tymeline/all");
             var responseString = await response.Content.ReadAsStringAsync();
             
@@ -124,9 +125,8 @@ namespace Tymeline.API.Tests
           [Test]
         public async Task Test_TymelinegetById_returnsValidJSON_forTymelineObject()
         {   
-            var array = setupTymelineList();
+        
             string key = "2";
-            _tymelineService.Setup(s => s.getById(key)).Returns(mockTymelineReturnById(key));
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/id/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             // ugly testing code . fix this!
@@ -138,12 +138,8 @@ namespace Tymeline.API.Tests
         [Test]
         public async Task Test_TymelineById_returns_204_forNotExistingElement()
         {
-            
-
+        
             string key = "105";
-
-            // _tymelineService.Setup(s => s.getById(key)).Returns(mockTymelineReturnById(key));
-            _tymelineService.Setup(s => s.getById(key)).Callback(() => mockTymelineReturnById(key));
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/id/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
@@ -154,12 +150,9 @@ namespace Tymeline.API.Tests
         [Test]
         public async Task Test_TymelineById_returns_204_forNotExistingElement_WithMockedException()
         {
-            
-
             string key = "99";
 
-            // array.Add( new TymelineObject("99",500+(random.Next() % 5000),new Content(RandomString(12)),10000+(random.Next() % 5000),RandomBool(),RandomBool()));
-            _tymelineService.Setup(s => s.getById(key)).Throws(new KeyNotFoundException());
+            _tymelineService.Setup(s => s.GetById(key)).Throws(new KeyNotFoundException());
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/id/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
@@ -170,16 +163,18 @@ namespace Tymeline.API.Tests
         [Test]
         public async Task Test_TymelineById_returns_500_forBackendError()
         {
-            // _authService.Setup(auth => auth.GetById)
+            
             string key = "99";
             
-            // array.Add( new TymelineObject("99",500+(random.Next() % 5000),new Content(RandomString(12)),10000+(random.Next() % 5000),RandomBool(),RandomBool()));
-            _tymelineService.Setup(s => s.getById(key)).Throws(new ArgumentException());
+            _tymelineService.Setup(s => s.GetById(key)).Throws(new ArgumentException());
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/id/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
             Assert.AreEqual(HttpStatusCode.InternalServerError,statusCode);
         }
+
+
+        
     }
 }
 

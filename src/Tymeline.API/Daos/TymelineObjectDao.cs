@@ -4,11 +4,11 @@ namespace Tymeline.API.Daos
 {
     public class TymelineObjectDao: ITymelineObjectDao{
         public TymelineObject getTymelineObjects(){
-        return null;
+            throw new System.NotImplementedException();
         }    
 
         public List<TymelineObject> getAll(){
-            return null;
+            throw new System.NotImplementedException();
         }
 
         public TymelineObject getById(string id)

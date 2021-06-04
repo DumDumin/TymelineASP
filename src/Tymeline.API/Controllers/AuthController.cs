@@ -63,24 +63,13 @@ namespace Tymeline.API.Controllers
         {
             try
             {
-            IUser user = _authService.Login(credentials);
-            if(user != null){
-
-                // TODO DOMAIN NEEDS TO BE SET BY ENV VARIABLE, just like path in launch setting
-                CookieOptions opt = new CookieOptions();
-                opt.Domain = "localhost";
-                opt.HttpOnly=true;
-                opt.Secure=true;
-                opt.SameSite=SameSiteMode.Strict;
-                opt.MaxAge=TimeSpan.FromHours(12);
-                Response.Cookies.Append("jwt",_JwtService.createJwt(user),opt);
-                Response.Cookies.Append("asd","testa",opt);
+                IUser user = _authService.Login(credentials);
+                constructLoginHeaders(user);
                 return StatusCode(201, user);
             }
-            else {
+             catch (ArgumentException)
+            {
                 return StatusCode(400, null);
-            }
-                
             }
             catch (System.Exception)
             {
@@ -88,8 +77,20 @@ namespace Tymeline.API.Controllers
             }
            
 
-        }  
+        }
 
+        private void constructLoginHeaders(IUser user)
+        {
+            // TODO DOMAIN NEEDS TO BE SET BY ENV VARIABLE, just like path in launch setting
+            CookieOptions opt = new CookieOptions();
+            opt.Domain = "localhost";
+            opt.HttpOnly = true;
+            opt.Secure = true;
+            opt.SameSite = SameSiteMode.Strict;
+            opt.MaxAge = TimeSpan.FromHours(12);
+            Response.Cookies.Append("jwt", _JwtService.createJwt(user), opt);
+            Response.Cookies.Append("asd", "testa", opt);
+        }
 
         [Authorize]
         [HttpGet]

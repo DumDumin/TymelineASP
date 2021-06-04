@@ -1,6 +1,10 @@
 public class Content{
     public string Text { get; set; }
 
+    public Content(){
+        
+    }
+
     public Content(string content){
         Text = content;
     }
@@ -14,6 +18,10 @@ public class TymelineObject{
     public int Start { get; set; }
     public bool CanChangeLength { get; set; }
     public bool CanMove { get; set; }
+
+    public TymelineObject(){
+
+    }
 
     public TymelineObject(string identifier, int lenghtTime, Content contents,int startTime,bool cChangeLength,bool cMove){
         Id=identifier;

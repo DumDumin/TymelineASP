@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Tymeline.API.Daos;
 
@@ -7,22 +8,22 @@ public class TymelineService : ITymelineService{
     public TymelineService(ITymelineObjectDao tymelineObjectDao){
         _tymelineObjectDao = tymelineObjectDao;
     }
-    public List<TymelineObject> getAll(){
+    public List<TymelineObject> GetAll(){
         return _tymelineObjectDao.getAll();
     }
 
-    public TymelineObject getById(string id){
-        return null;
+    public TymelineObject GetById(string id){
+        return _tymelineObjectDao.getById(id);
     }
 
-    public TymelineObject create(string JsonPayload){
-        return null;
+    public Tuple<int,TymelineObject> Create(TymelineObject tymelineObject){
+        throw new System.NotImplementedException();
     }
-    public TymelineObject updateById(string id,string JsonPayload){
-        return null;
+    public TymelineObject UpdateById(string id,TymelineObject tymelineObject){
+        throw new System.NotImplementedException();
     }
-    public TymelineObject deleteById(string id){
-        return null;
+    public void DeleteById(string id){
+        throw new System.NotImplementedException();
     }
 
 

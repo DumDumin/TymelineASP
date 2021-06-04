@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Tymeline.API.Controllers
 {
@@ -31,7 +32,7 @@ namespace Tymeline.API.Controllers
         [Route("all")]
         public List<TymelineObject> getAllTymelineObjects()
         {
-            return _timelineService.getAll();
+            return _timelineService.GetAll();
         }
         
         [HttpGet]
@@ -41,7 +42,7 @@ namespace Tymeline.API.Controllers
             
             try
             {
-                TymelineObject obj = _timelineService.getById(id);
+                TymelineObject obj = _timelineService.GetById(id);
                 return StatusCode(200,obj);
                 
             }
@@ -56,6 +57,52 @@ namespace Tymeline.API.Controllers
             
         }
 
+        [HttpPost]
+        [Route("create")]
+        public ActionResult<TymelineObject> CreateTymelineObject(TymelineObject tymelineObject)
+        {   
+            try
+            {
+                var createdItem = _timelineService.Create(tymelineObject); 
+                return StatusCode(createdItem.Item1, createdItem.Item2);
+            }
+            catch (System.Exception)
+            {
+                return StatusCode(500);
+            }
+        }
+
+
+        [HttpPost]
+        [Route("delete")]
+        public ActionResult<TymelineObject> DeletetymelineObjectById(string id)
+        {   
+            try
+            {
+                _timelineService.DeleteById(id);
+                return StatusCode(204);
+            }
+            catch (System.Exception)
+            {
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost]
+        [Route("update")]
+        public ActionResult<TymelineObject> UpdateTymelineObjectById(IUpdateTymelineObject data){
+            try
+            {
+            var updatedTymelineObject = _timelineService.UpdateById(data.Id,data.tymelineObject);
+                return StatusCode(200,updatedTymelineObject);
+            }
+            catch (System.Exception)
+            {
+                
+                return StatusCode(500);
+            }
+
+        }
 
     }
 }

@@ -85,7 +85,7 @@ namespace Tymeline.API.Tests
 
                     User user = User.CredentialsToUser(credentials);
                     if (userdict.ContainsKey(user.UserId)){
-                        return null;
+                        throw new ArgumentException();
                     }
                     else {
                         userdict.Add(user.UserId, user);
@@ -94,12 +94,12 @@ namespace Tymeline.API.Tests
 
                 }
                 else{
-                    return null;
+                    throw new ArgumentException();
                 }
             }
             else
             {
-                return null;
+                throw new ArgumentException();
             }
 
             
@@ -156,11 +156,11 @@ namespace Tymeline.API.Tests
                     return userdict[credentials.Email.GetHashCode()];
                 }
             }
-            return null;
+            throw new ArgumentException();
         }
         else
         {
-            return null;
+           throw new ArgumentException();
         }
         
     }
