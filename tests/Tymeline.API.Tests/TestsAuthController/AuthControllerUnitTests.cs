@@ -57,12 +57,19 @@ namespace Tymeline.API.Tests
             _authService.Setup(s => s.getUsers()).Returns(() =>  MockGetUsers());
             _authService.Setup(s => s.Login(It.IsAny<UserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
             _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
+            _authService.Setup(s => s.GetUserPermissions(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
         }
 
         [SetUp]
         public void Setup()
         {
            userdict = createUserDict();
+        }
+
+        private IUserPermissions mockGetUserPermissions(string email){
+            var UserPermissions = new UserPermissions(email, new List<IPermission>());
+            UserPermissions.Permissions.Add(new Permission("test","value"));
+            return UserPermissions;
         }
 
         private Dictionary<int,IUser> createUserDict()
@@ -111,50 +118,15 @@ namespace Tymeline.API.Tests
 
         }
 
-        private string MockJWT(IUser user) {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-        
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[] { new Claim("id", user.UserId.ToString()),new Claim("name", user.Mail)}),
-            
-            Expires = DateTime.UtcNow.AddHours(1),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
-    }
-
-    private JwtSecurityToken MockJWTvalidate(string token){
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-        tokenHandler.ValidateToken(token, new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
-            ClockSkew = TimeSpan.Zero
-        }, out SecurityToken validatedToken);
-
-        var jwtToken = (JwtSecurityToken)validatedToken;
-        var userId = int.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
-        return jwtToken;
-    }
-
-
     private IUser MockLogin(UserCredentials credentials)
     {
         if (credentials.complete())
         {
             // check if user is registered
             if(userdict.ContainsKey(credentials.Email.GetHashCode())){
-                if(
-                MockPasswdCheck(credentials.Password, userdict[credentials.Email.GetHashCode()])){
-                    return userdict[credentials.Email.GetHashCode()];
-                }
+            
+                return MockPasswdCheck(credentials.Password, userdict[credentials.Email.GetHashCode()]);
+                
             }
             throw new ArgumentException();
         }
@@ -164,7 +136,7 @@ namespace Tymeline.API.Tests
         }
         
     }
-    private bool MockPasswdCheck(string Password, IUser BaseUser){
+    private IUser MockPasswdCheck(string Password, IUser BaseUser){
         return BaseUser.verifyPassword(Password);
     }
 
@@ -299,7 +271,7 @@ namespace Tymeline.API.Tests
         }
 
 
-         [Test]
+        [Test]
         public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_Authentication_expect_Claims(){
             UserCredentials credentials = new UserCredentials("test5@email.de","hunter12");
 
@@ -318,7 +290,38 @@ namespace Tymeline.API.Tests
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var statusCode = responseTest.StatusCode;
             Assert.AreEqual(HttpStatusCode.OK,statusCode);
+
         }
+
+
+
+        [Test]
+        public async Task Test_UserInfo_with_registeredAccount_Return_Permissions_for_User(){
+            UserCredentials credentials = new UserCredentials("test5@email.de","hunter12");
+            
+
+            JsonContent content =  JsonContent.Create(credentials);
+           
+            
+            Uri uriLogin = new Uri("https://localhost:5001/auth/login");
+            var r = await _client.PostAsync(uriLogin.AbsoluteUri,content);
+            var rr = await r.Content.ReadAsStringAsync();
+            // var user = JsonConvert.DeserializeObject<User>(rr);
+            IEnumerable<string> cookies = r.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
+            Uri uriTest = new Uri("https://localhost:5001/auth/userInfo");
+            string jwt = cookies.First(s => s.StartsWith("jwt"));
+            jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=","");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",jwt);
+            var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
+            var responseObject = await responseTest.Content.ReadAsStringAsync();
+            var parsedObject = JsonConvert.DeserializeObject<UserPermissions>(responseObject);
+            Assert.NotNull(parsedObject.Email);
+            Assert.NotNull(parsedObject.Permissions);
+            Assert.AreEqual(mockGetUserPermissions("test5@email.de").Permissions,parsedObject.Permissions);
+
+            
+        }
+
           
     }
   

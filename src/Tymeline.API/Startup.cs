@@ -69,11 +69,11 @@ namespace Tymeline.API
             services.AddSingleton<UtilService>();
             services.AddSingleton<IAuthDao,AuthDao>();
             services.AddSingleton<ITymelineObjectDao,TymelineObjectDao>();
-            services.AddScoped<ITimeService, TimeService>();
             services.AddScoped<ITymelineService, TymelineService>();
             services.AddScoped<IAuthService, AuthService>();
             
             services.AddControllers();
+           
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tymeline.API", Version = "v1" });
@@ -96,6 +96,10 @@ namespace Tymeline.API
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            // first Authentication then Authorization!
+
+            
 
             app.UseAuthentication();
             app.UseAuthorization();

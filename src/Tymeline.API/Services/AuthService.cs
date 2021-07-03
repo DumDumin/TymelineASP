@@ -35,10 +35,8 @@ public class AuthService : IAuthService
         {
             if (credentials.complete())
             {
-                IUser user = AuthDao.getUserById(credentials.Email.GetHashCode()) ?? throw new ArgumentNullException();
-                if (user.verifyPassword(credentials.Password)){
-                    return user;
-                }        
+                return AuthDao.getUserByMail(credentials.Email).verifyPassword(credentials.Password);
+  
             }
             throw new ArgumentException();
           }
@@ -52,21 +50,16 @@ public class AuthService : IAuthService
     public IUser Register(IUserCredentials credentials)
     {
         if (credentials.complete() && _utilService.IsValidEmail(credentials.Email).Equals(true))
-        {
-            IUser user = User.CredentialsToUser(credentials);
-            if (!AuthDao.GetUsers().ContainsKey(user.UserId))
-            {
-                AuthDao.Register(user);
-                return user;
-            }
+        {            
+            return AuthDao.Register(credentials);       
         }
         throw new ArgumentException();
     }
 
 
-    public IUser GetById(int id)
+    public IUser GetByMail(string mail)
     {
-        return AuthDao.getUserById(id);
+        return AuthDao.getUserByMail(mail);
     }
 
     public void RemoveUser(IUser user)
@@ -79,5 +72,8 @@ public class AuthService : IAuthService
        return AuthDao.ChangePassword(user,passwd);
     }
 
-
+    public IUserPermissions GetUserPermissions(string email)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 
 public interface IAuthDao{
-    IUser Register(IUser user);
+    IUser Register(IUserCredentials user);
 
     IEnumerable<string> GetUserPermissions(IUser user);
 
-    Dictionary<int,IUser> GetUsers();
+    Dictionary<string,IUser> GetUsers();
 
-    IUser getUserById(int id);
+    IUser getUserByMail(string mail);
 
     void RemoveUser(IUser user);
 

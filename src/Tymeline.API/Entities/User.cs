@@ -13,7 +13,8 @@ public class User : IUser
     public User( string mail, string passwd ){
         passwordHasher = new PasswordHasher();
         Mail = mail;
-        UserId = Mail.GetHashCode();
+        UserId = Mail.GetHashCode(); // this cannot function as key in database, as this is reseeded every time the application starts
+        // much better would be to get the key if a user is created from the DB
         passwordHash = passwd;
 
     }
@@ -28,9 +29,12 @@ public class User : IUser
     public int UserId { get ; set; }
     private string passwordHash {get;}
     public string Mail {get; set;}
-    public bool verifyPassword(string passwd){
+    public IUser verifyPassword(string passwd){
         var (verified, needsUpgrade) = passwordHasher.Check(passwordHash, passwd);
-        return verified;
+        if (verified){
+            return this;
+        }
+        throw new ArgumentException();
     }
 
     public IUser updatePassword(string password){

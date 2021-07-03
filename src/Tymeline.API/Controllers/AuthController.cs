@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,19 @@ namespace Tymeline.API.Controllers
             _authService = authService;
             _JwtService = jwtService;
         }
+
+        private void constructLoginHeaders(IUser user)
+        {
+            // TODO DOMAIN NEEDS TO BE SET BY ENV VARIABLE, just like path in launch setting
+            CookieOptions opt = new CookieOptions();
+            opt.Domain = "localhost";
+            opt.HttpOnly = true;
+            opt.Secure = true;
+            opt.SameSite = SameSiteMode.Strict;
+            opt.MaxAge = TimeSpan.FromHours(12);
+            Response.Cookies.Append("jwt", _JwtService.createJwt(user), opt);
+        }
+
 
         [HttpPost]
         [Route("register")]
@@ -79,30 +93,20 @@ namespace Tymeline.API.Controllers
 
         }
 
-        private void constructLoginHeaders(IUser user)
-        {
-            // TODO DOMAIN NEEDS TO BE SET BY ENV VARIABLE, just like path in launch setting
-            CookieOptions opt = new CookieOptions();
-            opt.Domain = "localhost";
-            opt.HttpOnly = true;
-            opt.Secure = true;
-            opt.SameSite = SameSiteMode.Strict;
-            opt.MaxAge = TimeSpan.FromHours(12);
-            Response.Cookies.Append("jwt", _JwtService.createJwt(user), opt);
-            Response.Cookies.Append("asd", "testa", opt);
-        }
-
         [Authorize]
         [HttpGet]
         [Route("testjwt")]
         public ActionResult<string> TestJWT(){
+
             return StatusCode(200,User.Claims.ToString());
         }
 
         [HttpGet]
         [Route("userInfo")]
-        public ActionResult<string> TestUser(){
-            return StatusCode(200,User.Claims.ToString());
+        public ActionResult<IUserPermissions> userInfo(){
+            
+
+            return StatusCode(200,_authService.GetUserPermissions(User.Identity.Name));
         }
 
 

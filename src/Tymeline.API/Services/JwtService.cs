@@ -6,6 +6,11 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
+
+
+
+
+
 public class JwtService : IJwtService
 {
 
@@ -20,22 +25,24 @@ public class JwtService : IJwtService
         var utcNow = DateTime.UtcNow; 
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-        var claims = new Claim[]  
-            {  
-                        new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),  
-                        new Claim(JwtRegisteredClaimNames.UniqueName, user.Mail),  
-                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),  
-                        new Claim(JwtRegisteredClaimNames.Iat, utcNow.ToString()),  
-                        new Claim("Admin","0")  
-            };  
-        var token = new JwtSecurityToken
-        (
-            signingCredentials : new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-            claims : claims,
-            audience : _appSettings.Hostname,
-            issuer : _appSettings.Hostname,
-            expires : DateTime.UtcNow.AddHours(1)
-        );
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+                Subject = new ClaimsIdentity(new Claim[] 
+                {
+                    //add new claims in here
+                    new Claim(ClaimTypes.Name, user.Mail),
+                    new Claim("name", user.Mail),
+                    new Claim(ClaimTypes.Email, user.Mail),
+                    new Claim(ClaimTypes.Role, "admin")
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                Audience = _appSettings.Hostname,
+                Issuer = _appSettings.Hostname,
+            };
+
+        var token = tokenHandler.CreateToken(tokenDescriptor);
         
         return tokenHandler.WriteToken(token);
     }
@@ -60,15 +67,12 @@ public class JwtService : IJwtService
                 }, out SecurityToken validatedToken);
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
-                // var userId = int.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
-
-                // attach user to context on successful jwt validation
                 
                 return jwtToken;
             }
             catch
             {   
-                return null;
+                throw new System.NotImplementedException();
                 // do nothing if jwt validation fails
                 // user is not attached to context so request won't have access to secure routes
             }

@@ -7,12 +7,9 @@ public class AuthDao : IAuthDao
         throw new System.NotImplementedException();
     }
 
-    public IUser getUserById(string id)
-    {
-        throw new System.NotImplementedException();
-    }
 
-    public IUser getUserById(int id)
+
+    public IUser getUserByMail(string email)
     {
         throw new System.NotImplementedException();
     }
@@ -22,14 +19,14 @@ public class AuthDao : IAuthDao
         throw new System.NotImplementedException();
     }
 
-    public Dictionary<int,IUser> GetUsers()
+    public Dictionary<string,IUser> GetUsers()
     {
         throw new System.NotImplementedException();
     }
 
 
 
-    public IUser Register(IUser user)
+    public IUser Register(IUserCredentials user)
     {
         throw new System.NotImplementedException();
     }

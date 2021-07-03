@@ -16,14 +16,15 @@ namespace Tymeline.API.Daos
             throw new System.NotImplementedException();
         }
 
-        public List<TymelineObject> getByStart(int after, int before)
+        public List<TymelineObject> getByTime(int start, int end)
         {
             throw new System.NotImplementedException();
         }
 
-        public List<TymelineObject> getByEnd(int after, int before)
-        {
+
+        public void DeleteById(string id){
             throw new System.NotImplementedException();
         }
+
     }
 }

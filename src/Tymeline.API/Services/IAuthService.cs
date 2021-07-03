@@ -11,6 +11,8 @@ public interface IAuthService
 
     void RemoveUser(IUser user);
     IUser ChangePassword(IUser user, string passwd);
-    IUser GetById(int id);
+    IUser GetByMail(string mail);
+
+    IUserPermissions GetUserPermissions(string email);
 
 }

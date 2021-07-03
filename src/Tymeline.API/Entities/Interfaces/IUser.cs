@@ -6,7 +6,7 @@ public interface IUser
 
     IUser updatePassword(string password);
 
-    bool verifyPassword(string passwd);
+    IUser verifyPassword(string passwd);
 
 
 }

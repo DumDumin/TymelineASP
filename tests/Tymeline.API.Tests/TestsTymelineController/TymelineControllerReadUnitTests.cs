@@ -24,12 +24,14 @@ namespace Tymeline.API.Tests
 {
     [TestFixture]
     [Category("HTTP")]
-    public class TymelineControllerIntegrationTest : OneTimeSetUpAttribute
+    public class TymelineControllerReadUnitTest : OneTimeSetUpAttribute
     {
         private WebApplicationFactory<Startup> _factory;
         private HttpClient _client;
         private Moq.Mock<ITymelineService> _tymelineService;
         private Moq.Mock<IAuthService> _authService;
+
+        private List<TymelineObject> tymelineList;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -37,7 +39,7 @@ namespace Tymeline.API.Tests
             _factory = new WebApplicationFactory<Startup>();
             _tymelineService = new Moq.Mock<ITymelineService>();
             _authService = new Mock<IAuthService>();
-            
+            tymelineList = TymelineControllerReadUnitTest.setupTymelineList();
             _client = _factory.WithWebHostBuilder(builder =>
             {   
                 builder.ConfigureTestServices(services => 
@@ -47,6 +49,7 @@ namespace Tymeline.API.Tests
                 });
             }).CreateClient();
             _tymelineService.Setup(s => s.GetById(It.IsAny<string>())).Returns((string key) => mockTymelineReturnById(key));
+            _tymelineService.Setup(s => s.GetByTime(It.IsAny<int>(),It.IsAny<int>())).Returns((int start, int end) => mockTymelineReturnByTime(start,end));
         }
 
         [SetUp]
@@ -82,43 +85,57 @@ namespace Tymeline.API.Tests
             List<TymelineObject> array = new List<TymelineObject>();
             for (int i = 1; i < 100; i++)
             {
-                array.Add( new TymelineObject(i.ToString(),500+(random.Next() % 5000),new Content(RandomString(12)),10000+(random.Next() % 5000),RandomBool(),RandomBool()));
+
+                array.Add( new TymelineObject() {
+                    Id=i.ToString(),
+                    Length=500+(random.Next() % 5000),
+                    Content=new Content(RandomString(12)),
+                    Start=10000+(random.Next() % 5000),
+                    CanChangeLength=RandomBool(),
+                    CanMove=RandomBool()
+                    }
+                );
             }
             return array;
         }
 
 
+        private List<TymelineObject> mockTymelineReturnByTime(int start,int end){
+           
+            var s = tymelineList.Where(element => start<element.Start+element.Length && start>element.Start+element.Length).ToList();
+            s.AddRange(tymelineList.Where(element => start<element.Start && element.Start<end).ToList());
+            return s.Distinct().ToList();
+        }
+
         private TymelineObject mockTymelineReturnById(string identifier)
         
         {
-            var array = TymelineControllerIntegrationTest.setupTymelineList();
+            
+            var results = tymelineList.Where(element => element.Id.Equals(identifier)).ToList();
+            // var results = from obj in array where obj.Id.Equals(identifier) select obj; 
 
-            var results = from obj in array where obj.Id.Equals(identifier) select obj; 
-            // TODO this needs refactoring ! @Mathias, dont use switches like this, there ought to be a better way
-            // ask Tobias how to handle this, maybe just propagate the error, even if its not as desciptive.
             switch (results.Count())
             {
                 case 1:
-                    return results.ToList<TymelineObject>()[0];
+                    return results[0];
                 case 0:
                     throw new KeyNotFoundException("key does not exist in the result"); 
                 default:
                     throw new ArgumentException("there can only ever be one result with any given id");
             }
-           
         }
     
+
 
 
         [Test]
         public async Task Test_TymelinegetAll_returnsValidJSON_forListTymelineObject()
         {   
-            var array = setupTymelineList();
-            _tymelineService.Setup(s => s.GetAll()).Returns(array); 
-            var response = await _client.GetAsync("https://localhost:5001/tymeline/all");
+            _tymelineService.Setup(s => s.GetAll()).Returns(tymelineList); 
+            var response = await _client.GetAsync("https://localhost:5001/tymeline/get");
             var responseString = await response.Content.ReadAsStringAsync();
             
-            Assert.AreEqual(array,JsonConvert.DeserializeObject<List<TymelineObject>>(responseString));
+            Assert.AreEqual(tymelineList,JsonConvert.DeserializeObject<List<TymelineObject>>(responseString));
         } 
 
 
@@ -127,7 +144,7 @@ namespace Tymeline.API.Tests
         {   
         
             string key = "2";
-            var response = await _client.GetAsync($"https://localhost:5001/tymeline/id/{key}");
+            var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             // ugly testing code . fix this!
             Assert.AreEqual(HttpStatusCode.OK,response.StatusCode);
@@ -140,7 +157,7 @@ namespace Tymeline.API.Tests
         {
         
             string key = "105";
-            var response = await _client.GetAsync($"https://localhost:5001/tymeline/id/{key}");
+            var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
             Assert.AreEqual(HttpStatusCode.NoContent,statusCode);
@@ -153,7 +170,7 @@ namespace Tymeline.API.Tests
             string key = "99";
 
             _tymelineService.Setup(s => s.GetById(key)).Throws(new KeyNotFoundException());
-            var response = await _client.GetAsync($"https://localhost:5001/tymeline/id/{key}");
+            var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
             Assert.AreEqual(HttpStatusCode.NoContent,statusCode);
@@ -167,12 +184,40 @@ namespace Tymeline.API.Tests
             string key = "99";
             
             _tymelineService.Setup(s => s.GetById(key)).Throws(new ArgumentException());
-            var response = await _client.GetAsync($"https://localhost:5001/tymeline/id/{key}");
+            var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
             Assert.AreEqual(HttpStatusCode.InternalServerError,statusCode);
         }
 
+
+        [Test]
+        public async Task Test_TymelineByTime_returns_200_forValidTime()
+        {
+            var start = 12000;
+            var end = 13000;
+            
+            var response = await _client.GetAsync($"https://localhost:5001/tymeline/getbytime/{start}-{end}");
+            var responseString = await response.Content.ReadAsStringAsync();
+            var statusCode = response.StatusCode;
+            Assert.AreEqual(HttpStatusCode.OK,statusCode);
+       
+        }
+
+                [Test]
+        public async Task Test_TymelineByTime_ListOfTymelineObject_forValidTime()
+        {
+            var start = 12000;
+            var end = 13000;
+            
+            var response = await _client.GetAsync($"https://localhost:5001/tymeline/getbytime/{start}-{end}");
+            var responseString = await response.Content.ReadAsStringAsync();
+            var statusCode = response.StatusCode;
+            Assert.AreEqual(mockTymelineReturnByTime(start,end),JsonConvert.DeserializeObject<List<TymelineObject>>(responseString)
+            );
+        }
+
+       
 
         
     }

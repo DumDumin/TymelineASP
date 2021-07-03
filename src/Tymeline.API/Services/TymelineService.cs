@@ -23,7 +23,11 @@ public class TymelineService : ITymelineService{
         throw new System.NotImplementedException();
     }
     public void DeleteById(string id){
-        throw new System.NotImplementedException();
+        _tymelineObjectDao.DeleteById(id);
+    }
+
+    public List<TymelineObject> GetByTime(int start, int end){
+        return _tymelineObjectDao.getByTime(start,end);
     }
 
 

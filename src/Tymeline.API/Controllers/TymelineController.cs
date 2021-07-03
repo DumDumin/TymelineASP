@@ -14,7 +14,6 @@ namespace Tymeline.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    // [Authorize]
     public class TymelineController : Controller
     {
 
@@ -29,14 +28,23 @@ namespace Tymeline.API.Controllers
 
 
         [HttpGet]
-        [Route("all")]
+        [Route("get")]
         public List<TymelineObject> getAllTymelineObjects()
         {
             return _timelineService.GetAll();
         }
+
+
+        [HttpGet]
+        [Route("getbytime/{start}-{end}")]
+        public List<TymelineObject> GetByTime(int start, int end)
+        {
+            return _timelineService.GetByTime(start, end);
+        }
+
         
         [HttpGet]
-        [Route("id/{id}")]
+        [Route("get/{id}")]
         public ActionResult<TymelineObject> GetTymelineObjectsByKey(string id)
         {   
             
@@ -59,7 +67,7 @@ namespace Tymeline.API.Controllers
 
         [HttpPost]
         [Route("create")]
-        public ActionResult<TymelineObject> CreateTymelineObject(TymelineObject tymelineObject)
+        public ActionResult<TymelineObject> CreateTymelineObject([FromBody] TymelineObject tymelineObject)
         {   
             try
             {
@@ -75,7 +83,7 @@ namespace Tymeline.API.Controllers
 
         [HttpPost]
         [Route("delete")]
-        public ActionResult<TymelineObject> DeletetymelineObjectById(string id)
+        public ActionResult<TymelineObject> DeletetymelineObjectById([FromBody]string id)
         {   
             try
             {
@@ -90,7 +98,7 @@ namespace Tymeline.API.Controllers
 
         [HttpPost]
         [Route("update")]
-        public ActionResult<TymelineObject> UpdateTymelineObjectById(IUpdateTymelineObject data){
+        public ActionResult<TymelineObject> UpdateTymelineObjectById([FromBody] IUpdateTymelineObject data){
             try
             {
             var updatedTymelineObject = _timelineService.UpdateById(data.Id,data.tymelineObject);
@@ -101,8 +109,6 @@ namespace Tymeline.API.Controllers
                 
                 return StatusCode(500);
             }
-
         }
-
     }
 }

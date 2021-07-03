@@ -19,7 +19,7 @@ namespace Tymeline.API.Tests
     {
         IAuthService _authService;
         Moq.Mock<IAuthDao> _authDao;
-        Dictionary<int,IUser> userdict;
+        Dictionary<string,IUser> userdict;
 
         UtilService _utilService;
         IJwtService _jwtService;
@@ -34,9 +34,9 @@ namespace Tymeline.API.Tests
             _utilService = new UtilService();
             _authService = new AuthService(_authDao.Object, _utilService, _appSettingsOptions);
             _jwtService = new JwtService(_appSettingsOptions);
-            _authDao.Setup(s => s.getUserById(It.IsAny<int>())).Returns((int id) => MockGetUserById(id));
+            _authDao.Setup(s => s.getUserByMail(It.IsAny<string>())).Returns((string mail) => MockGetUserByMail(mail));
             _authDao.Setup(s => s.GetUsers()).Returns(() => MockGetUser());
-            _authDao.Setup(s => s.Register(It.IsAny<IUser>())).Returns((IUser user) => MockRegister(user));
+            _authDao.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials user) => MockRegister(user));
             _authDao.Setup(s => s.GetUserPermissions(It.IsAny<IUser>())).Returns((IUser user) => GetUserPermissions(user));
             _authDao.Setup(s => s.RemoveUser(It.IsAny<IUser>())).Callback((IUser user) => MockRemoveUser(user));
             _authDao.Setup(s => s.ChangePassword(It.IsAny<IUser>(),It.IsAny<string>())).Returns((IUser user, string password) => MockChangePassword(user,password));
@@ -49,26 +49,26 @@ namespace Tymeline.API.Tests
         }
 
         IUser MockChangePassword(IUser user, string password){
-            IUser oldUser = userdict.GetValueOrDefault(user.UserId);
+            IUser oldUser = userdict.GetValueOrDefault(user.Mail);
             var newUser = oldUser.updatePassword(password);
-            userdict.Remove(oldUser.UserId);
-            userdict.Add(newUser.UserId,newUser);
+            userdict.Remove(oldUser.Mail);
+            userdict.Add(newUser.Mail,newUser);
             return newUser;
 
         }
 
         void MockRemoveUser(IUser user){
-            userdict.Remove(user.UserId);
+            userdict.Remove(user.Mail);
         }
 
-        IUser MockRegister(IUser user){
+        IUser MockRegister(IUserCredentials user){
             // registering a user never fails!
-            if (userdict.ContainsKey(user.UserId)){
+            if (userdict.ContainsKey(user.Email)){
                 throw new ArgumentException();
             }
             else{
-                userdict.Add(user.UserId, user);
-                return user;
+                userdict.Add(user.Email, User.CredentialsToUser(user));
+                return User.CredentialsToUser(user);
             }
         }
 
@@ -77,28 +77,28 @@ namespace Tymeline.API.Tests
         }
 
 
-        Dictionary<int, IUser> MockGetUser(){
+        Dictionary<string, IUser> MockGetUser(){
             return userdict;
         }
 
-        IUser MockGetUserById(int id){
+        IUser MockGetUserByMail(string mail){
             
             IUser user;
-            userdict.TryGetValue(id,out user);
+            userdict.TryGetValue(mail,out user);
             if (user != null){
                 return user;
             }
             throw new ArgumentException();
         }
 
-        private Dictionary<int,IUser> createUserDict()
+        private Dictionary<string,IUser> createUserDict()
         {   
             var passwordHasher = new PasswordHasher();
-            Dictionary<int,IUser> users = new Dictionary<int, IUser>();
+            Dictionary<string,IUser> users = new Dictionary<string, IUser>();
             for (int i = 2; i < 100; i++)
             {
                 User user = new User($"test{i}@email.de",passwordHasher.Hash("hunter12"));
-                users.Add(user.UserId,user);
+                users.Add(user.Mail,user);
             }
             return users;
         }
@@ -175,7 +175,7 @@ namespace Tymeline.API.Tests
             IUserCredentials creds = new UserCredentials(mail,passwd);
             var user = User.CredentialsToUser(creds);
             _authService.RemoveUser(user);
-            Assert.Throws<ArgumentException>(() => _authService.GetById(user.UserId));
+            Assert.Throws<ArgumentException>(() => _authService.GetByMail(user.Mail));
         }
 
 
@@ -187,7 +187,7 @@ namespace Tymeline.API.Tests
             var user = User.CredentialsToUser(creds);
             _authService.RemoveUser(user);
             _authService.RemoveUser(user);
-           Assert.Throws<ArgumentException>(() => _authService.GetById(user.UserId));
+           Assert.Throws<ArgumentException>(() => _authService.GetByMail(user.Mail));
         }
 
         [Test]
