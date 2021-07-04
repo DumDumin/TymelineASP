@@ -53,7 +53,7 @@ namespace Tymeline.API.Tests
                     services.AddScoped<IAuthService>(s => _authService.Object);
                 });
             }).CreateClient();    
-            _tymelineService.Setup(s => s.DeleteById(It.IsAny<string>())).Callback((string id) => mockDeleteById(id));
+            _tymelineService.Setup(s => s.DeleteById(It.IsAny<int>())).Callback((int id) => mockDeleteById(id));
         }
 
 
@@ -62,7 +62,7 @@ namespace Tymeline.API.Tests
             tymelineList = TymelineControllerDeleteUnitTest.setupTymelineList();
         }
 
-        private void mockDeleteById(string id){
+        private void mockDeleteById(int id){
             var element = tymelineList.Find(element => element.Id.Equals(id));
             tymelineList.Remove(element);
         }
@@ -77,7 +77,7 @@ namespace Tymeline.API.Tests
             {
 
                 array.Add( new TymelineObject() {
-                    Id=i.ToString(),
+                    Id=i,
                     Length=500+(random.Next() % 5000),
                     Content=new Content(RandomString(12)),
                     Start=10000+(random.Next() % 5000),
@@ -113,7 +113,7 @@ namespace Tymeline.API.Tests
         public async Task Test_TymelineDelete_With_Existing_Entry_Returns_204() {
 
 
-            JsonContent content =  JsonContent.Create("10");
+            JsonContent content =  JsonContent.Create(10);
             var response = await _client.PostAsync($"https://localhost:5001/tymeline/delete",content);
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
@@ -125,7 +125,7 @@ namespace Tymeline.API.Tests
         [Test]
         public async Task Test_TymelineDelete_With_Existing_Entry_Returns_204_Expect_element_to_be_removed() {
 
-            var key = "10";
+            var key = 10;
             JsonContent content =  JsonContent.Create(key);
             var r = await _client.PostAsync($"https://localhost:5001/tymeline/delete",content);
             var responseString = await r.Content.ReadAsStringAsync();
@@ -138,7 +138,7 @@ namespace Tymeline.API.Tests
         public async Task Test_TymelineDelete_With_NotExisting_Entry_204() {
             
 
-            JsonContent content =  JsonContent.Create("1000");
+            JsonContent content =  JsonContent.Create(1000);
             
             var response = await _client.PostAsync($"https://localhost:5001/tymeline/delete",content);
             var responseString = await response.Content.ReadAsStringAsync();

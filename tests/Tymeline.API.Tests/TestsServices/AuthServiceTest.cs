@@ -109,7 +109,7 @@ namespace Tymeline.API.Tests
             IUserCredentials credentials = new UserCredentials(mail,"hunter12");
             IUser user = _authService.Login(credentials);
             Assert.NotNull(user);
-            Assert.AreEqual(user.UserId,mail.GetHashCode());
+            Assert.AreEqual(user.Mail,mail);
         }
         [Test]
         public void Test_Login_Given_Invalid_Credentials_Expect_ArgumentException(){
@@ -133,7 +133,7 @@ namespace Tymeline.API.Tests
             IUserCredentials credentials = new UserCredentials(mail,"hunter13");
             IUser user =_authService.Register(credentials);
             Assert.NotNull(user);
-            Assert.AreEqual(user.UserId,mail.GetHashCode());
+            Assert.AreEqual(user.Mail,mail);
         }
 
 
@@ -147,7 +147,7 @@ namespace Tymeline.API.Tests
             _authService.Register(credentials);
             IUser user =_authService.Login(creds);
             Assert.NotNull(user);
-            Assert.AreEqual(user.UserId,mail.GetHashCode());
+            Assert.AreEqual(user.Mail,mail);
         }
 
 
@@ -200,7 +200,7 @@ namespace Tymeline.API.Tests
             IUserCredentials creds = new UserCredentials(mail,"changedPassword");
              IUser loginUser =_authService.Login(creds);
             Assert.NotNull(loginUser);
-            Assert.AreEqual(loginUser.UserId,mail.GetHashCode());
+            Assert.AreEqual(loginUser.Mail,mail);
         }
 
 
@@ -217,7 +217,7 @@ namespace Tymeline.API.Tests
             IUserCredentials creds = new UserCredentials(mail,"changedPasswor2");
             IUser loginUser =_authService.Login(creds);
             Assert.NotNull(loginUser);
-            Assert.AreEqual(loginUser.UserId,mail.GetHashCode());
+            Assert.AreEqual(loginUser.Mail,mail);
         }
 
 

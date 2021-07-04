@@ -33,7 +33,7 @@ namespace Tymeline.API.Tests
 
         private UtilService _utilService;
         AppSettings _appSettings;
-        Dictionary<int,IUser> userdict;
+        Dictionary<string,IUser> userdict;
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
@@ -72,14 +72,14 @@ namespace Tymeline.API.Tests
             return UserPermissions;
         }
 
-        private Dictionary<int,IUser> createUserDict()
+        private Dictionary<string,IUser> createUserDict()
         {   
             var passwordHasher = new PasswordHasher();
-            Dictionary<int,IUser> users = new Dictionary<int, IUser>();
+            Dictionary<string,IUser> users = new Dictionary<string, IUser>();
             for (int i = 2; i < 100; i++)
             {
                 User user = new User($"test{i}@email.de",passwordHasher.Hash("hunter12"));
-                users.Add(user.UserId,user);
+                users.Add(user.Mail,user);
             }
             return users;
         }
@@ -91,11 +91,11 @@ namespace Tymeline.API.Tests
                 if(_utilService.IsValidEmail(credentials.Email).Equals(true)){
 
                     User user = User.CredentialsToUser(credentials);
-                    if (userdict.ContainsKey(user.UserId)){
+                    if (userdict.ContainsKey(user.Mail)){
                         throw new ArgumentException();
                     }
                     else {
-                        userdict.Add(user.UserId, user);
+                        userdict.Add(user.Mail, user);
                         return user;
                     }
 
@@ -123,9 +123,9 @@ namespace Tymeline.API.Tests
         if (credentials.complete())
         {
             // check if user is registered
-            if(userdict.ContainsKey(credentials.Email.GetHashCode())){
+            if(userdict.ContainsKey(credentials.Email)){
             
-                return MockPasswdCheck(credentials.Password, userdict[credentials.Email.GetHashCode()]);
+                return MockPasswdCheck(credentials.Password, userdict[credentials.Email]);
                 
             }
             throw new ArgumentException();

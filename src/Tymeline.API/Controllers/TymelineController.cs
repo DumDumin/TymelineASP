@@ -45,7 +45,7 @@ namespace Tymeline.API.Controllers
         
         [HttpGet]
         [Route("get/{id}")]
-        public ActionResult<TymelineObject> GetTymelineObjectsByKey(string id)
+        public ActionResult<TymelineObject> GetTymelineObjectsByKey(int id)
         {   
             
             try
@@ -71,8 +71,12 @@ namespace Tymeline.API.Controllers
         {   
             try
             {
-                var createdItem = _timelineService.Create(tymelineObject); 
-                return StatusCode(createdItem.Item1, createdItem.Item2);
+                return StatusCode(201, _timelineService.Create(tymelineObject));
+            }
+
+            catch(System.AccessViolationException)
+            {
+                return StatusCode(204);
             }
             catch (System.Exception)
             {
@@ -83,7 +87,7 @@ namespace Tymeline.API.Controllers
 
         [HttpPost]
         [Route("delete")]
-        public ActionResult<TymelineObject> DeletetymelineObjectById([FromBody]string id)
+        public ActionResult<TymelineObject> DeletetymelineObjectById([FromBody]int id)
         {   
             try
             {
@@ -99,11 +103,14 @@ namespace Tymeline.API.Controllers
         [HttpPost]
         [Route("update")]
         public ActionResult<TymelineObject> UpdateTymelineObjectById([FromBody] IUpdateTymelineObject data){
+            
             try
             {
-            var updatedTymelineObject = _timelineService.UpdateById(data.Id,data.tymelineObject);
+                var updatedTymelineObject = _timelineService.UpdateById(data.Id,data.tymelineObject);
                 return StatusCode(200,updatedTymelineObject);
             }
+
+            
             catch (System.Exception)
             {
                 

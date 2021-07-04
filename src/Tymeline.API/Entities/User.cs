@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
+
 
 
 public class User : IUser
@@ -13,7 +10,8 @@ public class User : IUser
     public User( string mail, string passwd ){
         passwordHasher = new PasswordHasher();
         Mail = mail;
-        UserId = Mail.GetHashCode(); // this cannot function as key in database, as this is reseeded every time the application starts
+        UserId =  Tymeline.API.HelperClass.ComputeSha256Hash(Mail).Substring(0,32); 
+        // this cannot function as key in database, as this is reseeded every time the application starts
         // much better would be to get the key if a user is created from the DB
         passwordHash = passwd;
 
@@ -26,7 +24,7 @@ public class User : IUser
     }
 
     private PasswordHasher passwordHasher {get;}
-    public int UserId { get ; set; }
+    public string UserId { get ; set; }
     private string passwordHash {get;}
     public string Mail {get; set;}
     public IUser verifyPassword(string passwd){

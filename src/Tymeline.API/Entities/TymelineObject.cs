@@ -12,7 +12,7 @@ public class Content{
 
 
 public class TymelineObject{
-    public string Id { get; set; }
+    public int Id { get; set; }
     public int Length { get; set; }
     public Content Content { get; set; }
     public int Start { get; set; }
@@ -23,7 +23,7 @@ public class TymelineObject{
 
     }
 
-    public TymelineObject(string identifier, int lenghtTime, Content contents,int startTime,bool cChangeLength,bool cMove){
+    public TymelineObject(int identifier, int lenghtTime, Content contents,int startTime,bool cChangeLength,bool cMove){
         Id=identifier;
         Length = lenghtTime;
         Content = contents;
@@ -39,12 +39,15 @@ public class TymelineObject{
         {
             return false;
         }
-        
         return this.Id.Equals(((TymelineObject)obj).Id);
     }
-    
-    public override int GetHashCode()
-    {
-        return this.Id.GetHashCode();
+
+    public bool Same(TymelineObject tymelineObject){
+        return this.GetHashCode().Equals(tymelineObject.GetHashCode());
     }
+
+    public override int GetHashCode(){
+        return this.Id.GetHashCode()+this.Length.GetHashCode()+this.Content.GetHashCode()+this.Start.GetHashCode();
+    }
+    
 }

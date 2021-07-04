@@ -1,6 +1,6 @@
 public interface IUser
 {
-    int UserId { get ; set; }
+    string UserId { get ; set; }
     string Mail {get; set;}
 
 
