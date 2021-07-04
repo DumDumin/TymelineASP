@@ -12,17 +12,26 @@ public class TymelineService : ITymelineService{
         return _tymelineObjectDao.getAll();
     }
 
-    public TymelineObject GetById(string id){
+    public TymelineObject GetById(int id){
         return _tymelineObjectDao.getById(id);
     }
 
-    public Tuple<int,TymelineObject> Create(TymelineObject tymelineObject){
-        throw new System.NotImplementedException();
+    public TymelineObject Create(TymelineObject tymelineObject){
+        return _tymelineObjectDao.Create(tymelineObject);
     }
-    public TymelineObject UpdateById(string id,TymelineObject tymelineObject){
-        throw new System.NotImplementedException();
+    public TymelineObject UpdateById(int id,TymelineObject tymelineObject){
+
+        try{
+            if(id.Equals(tymelineObject.Id)){
+                return _tymelineObjectDao.UpdateById(id,tymelineObject);
+            }
+            throw new ArgumentException();
+        }
+        catch(KeyNotFoundException){
+            return _tymelineObjectDao.Create(tymelineObject);
+        }
     }
-    public void DeleteById(string id){
+    public void DeleteById(int id){
         _tymelineObjectDao.DeleteById(id);
     }
 

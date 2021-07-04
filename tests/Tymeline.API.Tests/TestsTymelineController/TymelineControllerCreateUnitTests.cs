@@ -6,7 +6,9 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -22,6 +24,26 @@ namespace Tymeline.API.Tests
         private Moq.Mock<ITymelineService> _tymelineService;
         private Moq.Mock<IAuthService> _authService;
 
+        private AppSettings _configuration;
+
+
+        public static AppSettings GetApplicationConfiguration()
+        {
+            var configuration = new AppSettings();
+
+            var iConfig = new ConfigurationBuilder()
+            
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+            iConfig
+                .GetSection("AppSettings")
+                .Bind(configuration);
+
+            return configuration;
+        }
+
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
@@ -29,34 +51,39 @@ namespace Tymeline.API.Tests
             _tymelineService = new Moq.Mock<ITymelineService>();
             _authService = new Mock<IAuthService>();
             
+
+            _configuration = GetApplicationConfiguration();
+
             _client = _factory.WithWebHostBuilder(builder =>
             {   
                 builder.ConfigureTestServices(services => 
                 {   
                     services.AddScoped<ITymelineService>(s => _tymelineService.Object);
                     services.AddScoped<IAuthService>(s => _authService.Object);
+                    services.AddSingleton(_configuration);
                 });
-            }).CreateClient();    
+            }).CreateClient();
+
         }
 
         [Test]
-        public async Task Test_TymelineCreate_With_Existing_Entry_Returns_Existing_Entry_And_200() {
+        public async Task Test_TymelineCreate_With_Existing_Entry_Returns_204() {
 
-            TymelineObject tymelineObject = new TymelineObject("1",189890,new Content("testContent"),10000000,false,false);
-            TymelineObject ExistingtymelineObject = new TymelineObject("1",139890,new Content("testContenta"),12000000,true,false);
+            TymelineObject tymelineObject = new TymelineObject(1,189890,new Content("testContent"),10000000,false,false);
+            TymelineObject ExistingtymelineObject = new TymelineObject(1,139890,new Content("testContenta"),12000000,true,false);
 
-            _tymelineService.Setup(s => s.Create(It.IsAny<TymelineObject>())).Returns(new Tuple<int,TymelineObject>(200,ExistingtymelineObject));
+            _tymelineService.Setup(s => s.Create(It.IsAny<TymelineObject>())).Throws(new AccessViolationException());
             JsonContent content =  JsonContent.Create(tymelineObject);
             var response = await _client.PostAsync($"https://localhost:5001/tymeline/create",content);
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.OK,statusCode);
+            Assert.AreEqual(HttpStatusCode.NoContent,statusCode);
         }
 
           [Test]
         public async Task Test_TymelineCreate_With_New_Entry_Returns_New_Entry_And_201() {
-            TymelineObject tymelineObject = new TymelineObject("1",189890,new Content("testContent"),10000000,false,false);
-            _tymelineService.Setup(s => s.Create(It.IsAny<TymelineObject>())).Returns(new Tuple<int,TymelineObject>(201,tymelineObject));
+            TymelineObject tymelineObject = new TymelineObject(1,189890,new Content("testContent"),10000000,false,false);
+            _tymelineService.Setup(s => s.Create(It.IsAny<TymelineObject>())).Returns(tymelineObject);
             JsonContent content =  JsonContent.Create(tymelineObject);
 
 
