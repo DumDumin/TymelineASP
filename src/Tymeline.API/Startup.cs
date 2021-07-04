@@ -16,6 +16,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MySql.Data.MySqlClient;
 using Tymeline.API.Daos;
 
 namespace Tymeline.API
@@ -32,14 +33,15 @@ namespace Tymeline.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {   
-            services.AddSingleton<IJwtService,JwtService>();
-
+            services.Configure<CustomAuthenticationOptions>(Configuration.GetSection("CustomAuthenticationOptions"));
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["AppSettings:Secret"]));
+
+
+
             
             services.AddAuthorization(options => {
             });
-
             services.AddAuthentication(options =>  
             {  
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;  
@@ -64,11 +66,12 @@ namespace Tymeline.API
         
             });  
 
-            services.Configure<CustomAuthenticationOptions>(Configuration.GetSection("CustomAuthenticationOptions"));
-                        
+            
+            services.AddTransient<MySqlConnection>(_ => new MySqlConnection(Configuration["AppSettings:SqlConnection:MySqlConnectionString"]));
+            services.AddSingleton<IJwtService,JwtService>();
             services.AddSingleton<UtilService>();
             services.AddSingleton<IAuthDao,AuthDao>();
-            services.AddSingleton<ITymelineObjectDao,TymelineObjectDao>();
+            services.AddSingleton<ITymelineObjectDao,TymelineObjectDaoMySql>();
             services.AddScoped<ITymelineService, TymelineService>();
             services.AddScoped<IAuthService, AuthService>();
             
