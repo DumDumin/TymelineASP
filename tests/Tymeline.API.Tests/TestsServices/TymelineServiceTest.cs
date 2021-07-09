@@ -25,11 +25,11 @@ namespace Tymeline.API.Tests
             _timelineService = new TymelineService(_timelineObjectDao.Object);
             
             _timelineObjectDao.Setup(s => s.getAll()).Returns(() => mockGetAll());
-            _timelineObjectDao.Setup(x => x.getById(It.IsAny<int>())).Returns((int id) => mockGetById(id));
+            _timelineObjectDao.Setup(x => x.getById(It.IsAny<string>())).Returns((string id) => mockGetById(id));
             _timelineObjectDao.Setup(x => x.getByTime(It.IsAny<int>(),It.IsAny<int>())).Returns((int start,int end) => mockDaoGetByTime(start,end));
-            _timelineObjectDao.Setup(x => x.DeleteById(It.IsAny<int>())).Callback((int id) => mockDeleteById(id));
+            _timelineObjectDao.Setup(x => x.DeleteById(It.IsAny<string>())).Callback((string id) => mockDeleteById(id));
             _timelineObjectDao.Setup(x => x.Create(It.IsAny<TymelineObject>())).Returns((TymelineObject to) => mockCreate(to));
-            _timelineObjectDao.Setup(x => x.UpdateById(It.IsAny<int>(), It.IsAny<TymelineObject>())).Returns((int id,TymelineObject tO) => mockUpdateById(id,tO));
+            _timelineObjectDao.Setup(x => x.UpdateById(It.IsAny<string>(), It.IsAny<TymelineObject>())).Returns((string id,TymelineObject tO) => mockUpdateById(id,tO));
         }
         
 
@@ -39,19 +39,16 @@ namespace Tymeline.API.Tests
         }
 
 
-        TymelineObject mockUpdateById(int id, TymelineObject tymelineObject){
+        TymelineObject mockUpdateById(string id, TymelineObject tymelineObject){
             mockDeleteById(id);
             return mockCreate(tymelineObject);
         }
 
         TymelineObject mockCreate(TymelineObject to){
-            if(tymelineList.Contains(to)){
-                throw new AccessViolationException();
-            }
-            else{
+                to.Id = new Guid().ToString();
                 tymelineList.Add(to);
                 return to;
-            }
+            
         }
 
         List<TymelineObject> mockGetAll(){
@@ -63,7 +60,7 @@ namespace Tymeline.API.Tests
             tymelineList.Clear();
         }
 
-        private TymelineObject mockGetById(int id){
+        private TymelineObject mockGetById(string id){
             var s = tymelineList.Find(obj => obj.Id.Equals(id));
             if (s == null){
                 throw new KeyNotFoundException();
@@ -71,7 +68,7 @@ namespace Tymeline.API.Tests
             return s;
         }
 
-         private void mockDeleteById(int id){
+         private void mockDeleteById(string id){
             var element = tymelineList.Find(element => element.Id.Equals(id));
             tymelineList.Remove(element);
         }
@@ -103,7 +100,7 @@ namespace Tymeline.API.Tests
             {
 
                 array.Add( new TymelineObject() {
-                    Id=i,
+                    Id=i.ToString(),
                     Length=500+(random.Next() % 5000),
                     Content=new Content(RandomString(12)),
                     Start=10000+(random.Next() % 5000),
@@ -124,7 +121,7 @@ namespace Tymeline.API.Tests
 
         [Test]
         public void TestGetById_With_Existing_Element_Expect_Element(){
-            TymelineObject tymelineObject =  _timelineService.GetById(1);
+            TymelineObject tymelineObject =  _timelineService.GetById("1");
             Assert.IsInstanceOf<TymelineObject>(tymelineObject);
             Assert.AreEqual(tymelineList[0],tymelineObject);
 
@@ -133,13 +130,13 @@ namespace Tymeline.API.Tests
 
         [Test]
         public void TestGetById_With_Not_Existing_Element_Expect_Exceptions(){
-            Assert.Throws<KeyNotFoundException>(()=> _timelineService.GetById(2001));
+            Assert.Throws<KeyNotFoundException>(()=> _timelineService.GetById("2001"));
         }
 
 
         [Test]
         public void TestGetById_With_Existing_Element_Expect_Not_null_Return(){
-            Assert.NotNull(_timelineService.GetById(2));
+            Assert.NotNull(_timelineService.GetById("2"));
         }
 
         [Test]
@@ -149,44 +146,45 @@ namespace Tymeline.API.Tests
 
         [Test]
         public void Test_DeleteById_Expect_Item_to_be_Deleted(){
-            _timelineService.DeleteById(2);
-            Assert.Throws<KeyNotFoundException>(()=> _timelineService.GetById(2));
+            _timelineService.DeleteById("2");
+            Assert.Throws<KeyNotFoundException>(()=> _timelineService.GetById("2"));
         }
 
 
         [Test]
 
         public void Test_Create_Element_Expect_Element_to_be_Returned(){
-            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id="asd".GetHashCode(),Length=12389,Start=12379};
+            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id="asd",Length=12389,Start=12379};
             _timelineService.Create(element);
             Assert.AreEqual(element,_timelineService.GetById(element.Id));
         }
 
         [Test]
-        public void Test_Create_Existing_Element_Expect_AccessViolationException(){
-            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id=5,Length=12389,Start=12379};
-            Assert.Throws<AccessViolationException>(()=> _timelineService.Create(element));
-            Assert.IsFalse(_timelineService.GetById(element.Id).Same(element));
+        public void Test_Create_Existing_Element_Expect_UpdatedElement_To_Differ_From_Existing_Element(){
+            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id="5",Length=12389,Start=12379};
+            _timelineService.Create(element);
+            Assert.IsFalse(_timelineService.GetById("5").Same(element));
+        }
+
+
+        [Test]
+        public void Test_Create_Existing_Element_Expect_NewElement_To_Be_Itself(){
+            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id="5",Length=12389,Start=12379};
+            var newElement = _timelineService.Create(element);
+            Assert.IsTrue(_timelineService.GetById(newElement.Id).Same(newElement));
         }
         
 
-        [Test]
-        public void Test_Update_NotExistingObject(){
-            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id=105,Length=12389,Start=12379};
-            _timelineService.UpdateById(105,element);
-            Assert.IsTrue(element.Same(_timelineService.GetById(105)));
-
-        }
 
         public void Test_Update_ExistingObject(){
-            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id=5,Length=12389,Start=12379};
-            _timelineService.UpdateById(5,element);
-            Assert.IsTrue(element.Same(_timelineService.GetById(5)));
+            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id="5",Length=12389,Start=12379};
+            _timelineService.UpdateById("5",element);
+            Assert.IsTrue(element.Same(_timelineService.GetById("5")));
         }
 
         public void Test_Update_ExistingObject_with_non_matching_object_expect_error(){
-            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id=105,Length=12389,Start=12379};
-            Assert.Throws<ArgumentException>(()=> _timelineService.UpdateById(5,element));
+            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id="105",Length=12389,Start=12379};
+            Assert.Throws<ArgumentException>(()=> _timelineService.UpdateById("5",element));
         }
 
 

@@ -5,14 +5,14 @@ public interface ITymelineObjectDao{
    TymelineObject getTymelineObjects();
    List<TymelineObject> getAll();
 
-   TymelineObject getById(int id);
+   TymelineObject getById(string id);
 
    List<TymelineObject> getByTime(int start,int end);
 
-   void DeleteById(int id);
+   void DeleteById(string id);
 
    TymelineObject Create(TymelineObject tymelineObject);
 
-   TymelineObject UpdateById(int id, TymelineObject tymelineObject);
+   TymelineObject UpdateById(string id, TymelineObject tymelineObject);
 
 }

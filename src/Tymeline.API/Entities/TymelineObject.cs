@@ -12,7 +12,7 @@ public class Content{
 
 
 public class TymelineObject{
-    public int Id { get; set; }
+    public string Id { get; set; }
     public int Length { get; set; }
     public Content Content { get; set; }
     public int Start { get; set; }
@@ -23,7 +23,7 @@ public class TymelineObject{
 
     }
 
-    public TymelineObject(int identifier, int lenghtTime, Content contents,int startTime,bool cChangeLength,bool cMove){
+    public TymelineObject(string identifier, int lenghtTime, Content contents,int startTime,bool cChangeLength,bool cMove){
         Id=identifier;
         Length = lenghtTime;
         Content = contents;

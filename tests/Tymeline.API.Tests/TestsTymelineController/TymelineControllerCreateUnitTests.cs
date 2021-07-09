@@ -63,27 +63,20 @@ namespace Tymeline.API.Tests
                     services.AddSingleton(_configuration);
                 });
             }).CreateClient();
+            _tymelineService.Setup(s => s.Create(It.IsAny<TymelineObject>())).Returns((TymelineObject tO) => mockCreateTymelineObject(tO));
 
         }
 
-        [Test]
-        public async Task Test_TymelineCreate_With_Existing_Entry_Returns_204() {
-
-            TymelineObject tymelineObject = new TymelineObject(1,189890,new Content("testContent"),10000000,false,false);
-            TymelineObject ExistingtymelineObject = new TymelineObject(1,139890,new Content("testContenta"),12000000,true,false);
-
-            _tymelineService.Setup(s => s.Create(It.IsAny<TymelineObject>())).Throws(new AccessViolationException());
-            JsonContent content =  JsonContent.Create(tymelineObject);
-            var response = await _client.PostAsync($"https://localhost:5001/tymeline/create",content);
-            var responseString = await response.Content.ReadAsStringAsync();
-            var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.NoContent,statusCode);
+        private TymelineObject mockCreateTymelineObject(TymelineObject tO){
+            tO.Id = new Guid().ToString();
+            return tO;
         }
+
 
           [Test]
         public async Task Test_TymelineCreate_With_New_Entry_Returns_New_Entry_And_201() {
-            TymelineObject tymelineObject = new TymelineObject(1,189890,new Content("testContent"),10000000,false,false);
-            _tymelineService.Setup(s => s.Create(It.IsAny<TymelineObject>())).Returns(tymelineObject);
+            TymelineObject tymelineObject = new TymelineObject("1",189890,new Content("testContent"),10000000,false,false);
+           
             JsonContent content =  JsonContent.Create(tymelineObject);
 
 

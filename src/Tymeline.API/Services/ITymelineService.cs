@@ -6,10 +6,10 @@ public interface ITymelineService{
 
 
 
-    TymelineObject GetById(int id);
+    TymelineObject GetById(string id);
 
     List<TymelineObject> GetByTime(int start,int end);
     TymelineObject Create(TymelineObject tymelineObject);
-    TymelineObject UpdateById(int id,TymelineObject tymelineObject);
-    void DeleteById(int id);
+    TymelineObject UpdateById(string id,TymelineObject tymelineObject);
+    void DeleteById(string id);
 }

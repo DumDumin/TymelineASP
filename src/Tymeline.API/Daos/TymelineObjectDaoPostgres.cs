@@ -19,7 +19,7 @@ namespace Tymeline.API.Daos
             throw new System.NotImplementedException();
         }
 
-        public TymelineObject getById(int id)
+        public TymelineObject getById(string id)
         {
             throw new System.NotImplementedException();
         }
@@ -30,7 +30,7 @@ namespace Tymeline.API.Daos
         }
 
 
-        public void DeleteById(int id){
+        public void DeleteById(string id){
             throw new System.NotImplementedException();
         }
 
@@ -39,7 +39,7 @@ namespace Tymeline.API.Daos
             throw new System.NotImplementedException();
         }
 
-        public TymelineObject UpdateById(int id, TymelineObject tymelineObject)
+        public TymelineObject UpdateById(string id, TymelineObject tymelineObject)
         {
             throw new System.NotImplementedException();
         }

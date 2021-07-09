@@ -48,7 +48,7 @@ namespace Tymeline.API.Tests
                     services.AddScoped<IAuthService>(s => _authService.Object);
                 });
             }).CreateClient();
-            _tymelineService.Setup(s => s.GetById(It.IsAny<int>())).Returns((int key) => mockTymelineReturnById(key));
+            _tymelineService.Setup(s => s.GetById(It.IsAny<string>())).Returns((string key) => mockTymelineReturnById(key));
             _tymelineService.Setup(s => s.GetByTime(It.IsAny<int>(),It.IsAny<int>())).Returns((int start, int end) => mockTymelineReturnByTime(start,end));
         }
 
@@ -87,7 +87,7 @@ namespace Tymeline.API.Tests
             {
 
                 array.Add( new TymelineObject() {
-                    Id=i,
+                    Id=i.ToString(),
                     Length=500+(random.Next() % 5000),
                     Content=new Content(RandomString(12)),
                     Start=10000+(random.Next() % 5000),
@@ -107,7 +107,7 @@ namespace Tymeline.API.Tests
             return s.Distinct().ToList();
         }
 
-        private TymelineObject mockTymelineReturnById(int identifier)
+        private TymelineObject mockTymelineReturnById(string identifier)
         
         {
             
@@ -143,7 +143,7 @@ namespace Tymeline.API.Tests
         public async Task Test_TymelinegetById_returnsValidJSON_forTymelineObject()
         {   
         
-            int key = 2;
+            string key = "2";
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             // ugly testing code . fix this!
@@ -156,7 +156,7 @@ namespace Tymeline.API.Tests
         public async Task Test_TymelineById_returns_204_forNotExistingElement()
         {
         
-            int key = 105;
+            string key = "105";
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
@@ -167,7 +167,7 @@ namespace Tymeline.API.Tests
         [Test]
         public async Task Test_TymelineById_returns_204_forNotExistingElement_WithMockedException()
         {
-            int key = 99;
+            string key = "99";
 
             _tymelineService.Setup(s => s.GetById(key)).Throws(new KeyNotFoundException());
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
@@ -181,7 +181,7 @@ namespace Tymeline.API.Tests
         public async Task Test_TymelineById_returns_500_forBackendError()
         {
             
-            int key = 99;
+            string key = "99";
             
             _tymelineService.Setup(s => s.GetById(key)).Throws(new ArgumentException());
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");

@@ -12,14 +12,14 @@ public class TymelineService : ITymelineService{
         return _tymelineObjectDao.getAll();
     }
 
-    public TymelineObject GetById(int id){
+    public TymelineObject GetById(string id){
         return _tymelineObjectDao.getById(id);
     }
 
     public TymelineObject Create(TymelineObject tymelineObject){
         return _tymelineObjectDao.Create(tymelineObject);
     }
-    public TymelineObject UpdateById(int id,TymelineObject tymelineObject){
+    public TymelineObject UpdateById(string id,TymelineObject tymelineObject){
 
         try{
             if(id.Equals(tymelineObject.Id)){
@@ -31,7 +31,7 @@ public class TymelineService : ITymelineService{
             return _tymelineObjectDao.Create(tymelineObject);
         }
     }
-    public void DeleteById(int id){
+    public void DeleteById(string id){
         _tymelineObjectDao.DeleteById(id);
     }
 

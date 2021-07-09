@@ -45,7 +45,7 @@ namespace Tymeline.API.Controllers
         
         [HttpGet]
         [Route("get/{id}")]
-        public ActionResult<TymelineObject> GetTymelineObjectsByKey(int id)
+        public ActionResult<TymelineObject> GetTymelineObjectsByKey(string id)
         {   
             
             try
@@ -87,7 +87,7 @@ namespace Tymeline.API.Controllers
 
         [HttpPost]
         [Route("delete")]
-        public ActionResult<TymelineObject> DeletetymelineObjectById([FromBody]int id)
+        public ActionResult<TymelineObject> DeletetymelineObjectById([FromBody]string id)
         {   
             try
             {

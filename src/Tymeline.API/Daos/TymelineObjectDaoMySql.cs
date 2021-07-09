@@ -27,7 +27,7 @@ namespace Tymeline.API.Daos
             List<TymelineObject> tymelineList;
             try{
                 
-                string sqlCmd = "select t.id,t.start,t.length,t.`canMove`,t.`canChangeLength`,c.text  from `TymelineObjects` t inner join `Content` c on c.id = t.`ContentID`";
+                string sqlCmd = "select t.id,t.start,t.length,t.canMove,t.canChangeLength,c.text  from TymelineObjects t inner join Content c on c.id = t.id";
                 // string sqlCmd = "select t.id,t.start,t.`canMove`,t.`canChangeLength`,t.`start`,c.text  from `TymelineObjects` t inner join `Content` c on c.id = t.`ContentID`";
                 MySqlDataAdapter adr = new MySqlDataAdapter(sqlCmd, sqlConnection);
                 adr.SelectCommand.CommandType = CommandType.Text;
@@ -36,7 +36,7 @@ namespace Tymeline.API.Daos
                 tymelineList = dt.AsEnumerable()
                 .Select(s => new TymelineObject()
                 {Start= s.Field<int>("start"),
-                Id=s.Field<int>("id"), Length=s.Field<int>("length"),
+                Id=s.Field<string>("id"), Length=s.Field<int>("length"),
                 Content=new Content(s.Field<string>("text")),
                 CanMove=s.Field<bool>("canMove"),
                 CanChangeLength=s.Field<bool>("canChangeLength") })
@@ -55,7 +55,7 @@ namespace Tymeline.API.Daos
             
         }
 
-        public TymelineObject getById(int id)
+        public TymelineObject getById(string id)
         {
             TymelineObject tymelineObject;
             try{
@@ -67,7 +67,7 @@ namespace Tymeline.API.Daos
                 timeline.canMove,
                 timeline.canChangeLength,
                 content.text 
-                from TymelineObjects timeline inner join `Content` content on content.id = timeline.ContentID where timeline.id = {id}";
+                from TymelineObjects timeline inner join `Content` content on content.id = timeline.id where timeline.id = {id}";
               
                 MySqlDataAdapter adr = new MySqlDataAdapter(sqlCmd, sqlConnection);
                 adr.SelectCommand.CommandType = CommandType.Text;
@@ -76,7 +76,7 @@ namespace Tymeline.API.Daos
                 tymelineObject = dt.AsEnumerable()
                 .Select(s => new TymelineObject()
                 {Start= s.Field<int>("start"),
-                Id=s.Field<int>("id"),
+                Id=s.Field<string>("id"),
                 Length=s.Field<int>("length"),
                 Content=new Content(s.Field<string>("text")),
                 CanMove=s.Field<bool>("canMove"),
@@ -103,7 +103,7 @@ namespace Tymeline.API.Daos
         }
 
 
-        public void DeleteById(int id){
+        public void DeleteById(string id){
             throw new System.NotImplementedException();
         }
 
@@ -112,7 +112,7 @@ namespace Tymeline.API.Daos
             throw new System.NotImplementedException();
         }
 
-        public TymelineObject UpdateById(int id, TymelineObject tymelineObject)
+        public TymelineObject UpdateById(string id, TymelineObject tymelineObject)
         {
             throw new System.NotImplementedException();
         }

@@ -37,10 +37,10 @@ private WebApplicationFactory<Startup> _factory;
                     services.AddScoped<IAuthService>(s => _authService.Object);
                 });
             }).CreateClient();
-            _tymelineService.Setup(s => s.UpdateById(It.IsAny<int>(),It.IsAny<TymelineObject>())).Returns((int id,TymelineObject cc) => MockUpdateById(id,cc));
+            _tymelineService.Setup(s => s.UpdateById(It.IsAny<string>(),It.IsAny<TymelineObject>())).Returns((string id,TymelineObject cc) => MockUpdateById(id,cc));
         }
 
-        TymelineObject MockUpdateById(int id, TymelineObject tymelineObject){
+        TymelineObject MockUpdateById(string id, TymelineObject tymelineObject){
             if(id == tymelineObject.Id){
                 return tymelineObject;
             }
@@ -51,9 +51,9 @@ private WebApplicationFactory<Startup> _factory;
 
         [Test]
         public async Task Test_TymelineUpdate_With_Existing_Entry_Returns_Existing_Entry_And_200() {
-            TymelineObject tymelineObject = new TymelineObject(1,189890,new Content("testContent"),10000000,false,false);
+            TymelineObject tymelineObject = new TymelineObject("1",189890,new Content("testContent"),10000000,false,false);
             var obj = new IUpdateTymelineObject();
-            obj.Id = 1;
+            obj.Id = "1";
             obj.tymelineObject = tymelineObject;
             var content = JsonContent.Create(obj);
            
@@ -65,9 +65,9 @@ private WebApplicationFactory<Startup> _factory;
 
           [Test]
         public async Task Test_TymelineUpdate_With_New_Entry_Returns_New_Entry_And_201() {
-            TymelineObject tymelineObject = new TymelineObject(1,189890,new Content("testContent"),10000000,false,false);
+            TymelineObject tymelineObject = new TymelineObject("1",189890,new Content("testContent"),10000000,false,false);
             var obj = new IUpdateTymelineObject();
-            obj.Id = 1;
+            obj.Id = "1";
             obj.tymelineObject = tymelineObject;
             var content = JsonContent.Create(obj);
         
