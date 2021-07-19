@@ -13,7 +13,6 @@ namespace Tymeline.API.Tests
 {
     public class TymelineObjectDaoTests : OneTimeSetUpAttribute
     {
-        Moq.Mock<ILogger<ITymelineObjectDao>> logger;
         private AppSettings _configuration;
         ITymelineObjectDao _timelineObjectDao;
 
@@ -53,8 +52,8 @@ namespace Tymeline.API.Tests
             {
             new MySqlCommand("drop table IF EXISTS TymelineObjects",connection).ExecuteNonQuery();
             new MySqlCommand("drop table IF EXISTS Content",connection).ExecuteNonQuery();
-            new MySqlCommand("create table Content ( id binary(16) PRIMARY KEY , text varchar(255)); ",connection).ExecuteNonQuery();
-            new MySqlCommand("create table TymelineObjects ( id binary(16) PRIMARY KEY, length int, start int, canChangeLength bool, canMove bool, ContentId binary(16) ,constraint fk_content foreign key (ContentId) references Content(id) on update restrict on Delete Cascade); ",connection).ExecuteNonQuery();
+            new MySqlCommand("create table Content ( id varchar(64) PRIMARY KEY , text varchar(255)); ",connection).ExecuteNonQuery();
+            new MySqlCommand("create table TymelineObjects ( id varchar(64) PRIMARY KEY, length int, start int, canChangeLength bool, canMove bool, ContentId varchar(64) ,constraint fk_content foreign key (ContentId) references Content(id) on update restrict on Delete Cascade); ",connection).ExecuteNonQuery();
             
             }
             catch (System.Exception)
@@ -71,22 +70,40 @@ namespace Tymeline.API.Tests
 
 
         private void prepopulateTymelineObjects(MySqlConnection connection){
-            connection.Open();
             try
             {
-            var k = Guid.NewGuid();
-            
-            var ss = new MySqlCommand("INSERT INTO Content (id,text) VALUES (?id,'asd');",connection);
+            connection.Open();
 
-            ss.Parameters.Add("id",MySqlDbType.Binary).Value = k.ToByteArray();
-            // ss.Parameters.AddWithValue("@text","asd");
-            ss.ExecuteScalar();
+            var command = new MySqlCommand("insert into Content values (@id,@text)",connection);
+            var commandtymeline = new MySqlCommand("insert into TymelineObjects (id, canChangeLength, canMove, start, length, ContentId) values(@id,true,false,FLOOR(RAND()*10000),FLOOR(RAND()*1000000),@guid); ",connection);
+            var initialContentId = Guid.NewGuid().ToString();
+            var initialTymelineId= Guid.NewGuid().ToString();
 
-            
-            // var sss =new MySqlCommand("insert into Content (id,text) values (UUID_TO_BIN(uuid()),'test text3');",connection).ExecuteScalar();
-            // var s = new MySqlCommand("insert into TymelineObjects (id,canChangeLength,canMove,start,length) values(UUID_TO_BIN(uuid()),true,true,12378,12387); ",connection).ExecuteScalar();
-            new MySqlCommand("insert into TymelineObjects (id,canChangeLength,canMove,start,length) values(UUID_TO_BIN(uuid()),true,false,13378,1212387); ",connection).ExecuteNonQuery();
-            new MySqlCommand("insert into TymelineObjects (id,canChangeLength,canMove,start,length) values(UUID_TO_BIN(uuid()),false,true,14378,12312387); ",connection).ExecuteNonQuery();
+
+            command.Parameters.AddWithValue("@id",initialContentId);
+            command.Parameters.AddWithValue("@text",TestUtil.RandomString(50));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+
+            commandtymeline.Parameters.AddWithValue("@id",initialTymelineId);
+            commandtymeline.Parameters.AddWithValue("@guid",initialContentId);
+
+            commandtymeline.Prepare();
+            commandtymeline.ExecuteNonQuery();
+
+            for (int i = 0; i < 50; i++)
+            {
+                var idContent = Guid.NewGuid().ToString();
+                var idTymeline = Guid.NewGuid().ToString();
+                command.Parameters["@id"].Value = idContent;
+                command.Parameters["@text"].Value = TestUtil.RandomString(50);
+                command.ExecuteNonQuery();
+                commandtymeline.Parameters["@id"].Value=idTymeline;
+                commandtymeline.Parameters["@guid"].Value=idContent;
+                commandtymeline.ExecuteNonQuery();
+            }
+       
             }
             catch (System.Exception)
             {
@@ -100,6 +117,7 @@ namespace Tymeline.API.Tests
         }
 
         [Test]
+        [Category("Sql")]
         public void TestGetAll()
         {
             Assert.IsInstanceOf<List<TymelineObject>>(_timelineObjectDao.getAll());
@@ -107,10 +125,13 @@ namespace Tymeline.API.Tests
 
 
         [Test]
+        [Category("Sql")]
         public void TestGetExistingId_Expect_TymelineObject(){
-            Assert.IsInstanceOf<TymelineObject>(_timelineObjectDao.getById("1"));
+            var first = _timelineObjectDao.getAll()[0];
+            Assert.IsInstanceOf<TymelineObject>(_timelineObjectDao.getById(first.Id));
         }
         [Test]
+        [Category("Sql")]
         public void GetNotExistingId_Expect_KeyNotFoundException(){
 
             Assert.Throws<KeyNotFoundException>(() => _timelineObjectDao.getById("3123"));
@@ -118,6 +139,7 @@ namespace Tymeline.API.Tests
 
 
         [Test]
+        [Category("Sql")]
         public void InsertNewElement_Expect_Element_To_Exist(){
             var t = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("test"),Length=123,Start=12314};
             
@@ -125,6 +147,7 @@ namespace Tymeline.API.Tests
         }
 
         [Test]
+        [Category("Sql")]
         public void InsertNewElement_With_Missing_Content_Expect_SQL_Error(){
             // mathias WTF? how should this happen? this is dealt with in the transaction
              var t = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("test"),Length=123,Start=12314};
@@ -132,6 +155,7 @@ namespace Tymeline.API.Tests
         }
 
         [Test]
+        [Category("Sql")]
         public void InsertExistingElement_Expect_SQL_Error(){
             // does not make sense with this implementation
             var t = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("test"),Length=123,Start=12314};

@@ -22,19 +22,7 @@ namespace Tymeline.API.Tests
         private Moq.Mock<ITymelineService> _tymelineService;
         private Moq.Mock<IAuthService> _authService;
         private List<TymelineObject> tymelineList;
-        private static Random random = new Random();
 
-        public static string RandomString(int length)
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-            .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
-
-        public static bool RandomBool()
-        {
-            return (random.Next() % 2)==1;
-        }
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -59,7 +47,7 @@ namespace Tymeline.API.Tests
 
         [SetUp]
         public void SetUp(){
-            tymelineList = TymelineControllerDeleteUnitTest.setupTymelineList();
+            tymelineList = TestUtil.setupTymelineList();
         }
 
         private void mockDeleteById(string id){
@@ -67,27 +55,6 @@ namespace Tymeline.API.Tests
             tymelineList.Remove(element);
         }
 
-          static private List<TymelineObject> setupTymelineList(){
-            // this will return different objects each run! be prepared to not test for anything but existance of some attributes
-            // DO NOT TEST THE VALUE OF ATTRIBUTES NOT CREATED AS A MOCK SPECIFICALLY FOR USE IN THAT TEST
-            // IT WILL BREAK AND YOU WILL HATE LIFE
-
-            List<TymelineObject> array = new List<TymelineObject>();
-            for (int i = 1; i < 100; i++)
-            {
-
-                array.Add( new TymelineObject() {
-                    Id=i.ToString(),
-                    Length=500+(random.Next() % 5000),
-                    Content=new Content(RandomString(12)),
-                    Start=10000+(random.Next() % 5000),
-                    CanChangeLength=RandomBool(),
-                    CanMove=RandomBool()
-                    }
-                );
-            }
-            return array;
-        }
 
 
         private TymelineObject mockTymelineReturnById(string identifier)

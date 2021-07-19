@@ -25,11 +25,8 @@ namespace Tymeline.API.Tests
     public class AuthControllerUnitTests : OneTimeSetUpAttribute
     {
         private WebApplicationFactory<Startup> _factory;
-        private string secret;
         private HttpClient _client;
         private Moq.Mock<IAuthService> _authService;
-
-        private Mock<IJwtService> _jwtService;
 
         private UtilService _utilService;
         AppSettings _appSettings;

@@ -75,7 +75,7 @@ namespace Tymeline.API.Tests
 
           [Test]
         public async Task Test_TymelineCreate_With_New_Entry_Returns_New_Entry_And_201() {
-            TymelineObject tymelineObject = new TymelineObject("1",189890,new Content("testContent"),10000000,false,false);
+            TymelineObject tymelineObject = new TymelineObject(189890,new Content("testContent"),10000000,false,false);
            
             JsonContent content =  JsonContent.Create(tymelineObject);
 

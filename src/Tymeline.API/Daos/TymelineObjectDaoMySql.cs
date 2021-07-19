@@ -27,8 +27,7 @@ namespace Tymeline.API.Daos
             List<TymelineObject> tymelineList;
             try{
                 
-                string sqlCmd = "select t.id,t.start,t.length,t.canMove,t.canChangeLength,c.text  from TymelineObjects t inner join Content c on c.id = t.id";
-                // string sqlCmd = "select t.id,t.start,t.`canMove`,t.`canChangeLength`,t.`start`,c.text  from `TymelineObjects` t inner join `Content` c on c.id = t.`ContentID`";
+                string sqlCmd = "select t.id,t.start,t.length,t.canMove,t.canChangeLength,c.text from TymelineObjects t inner join Content c on c.id = t.ContentID";
                 MySqlDataAdapter adr = new MySqlDataAdapter(sqlCmd, sqlConnection);
                 adr.SelectCommand.CommandType = CommandType.Text;
                 DataTable dt = new DataTable();
@@ -36,7 +35,8 @@ namespace Tymeline.API.Daos
                 tymelineList = dt.AsEnumerable()
                 .Select(s => new TymelineObject()
                 {Start= s.Field<int>("start"),
-                Id=s.Field<string>("id"), Length=s.Field<int>("length"),
+                Id=s.Field<string>("id"),
+                Length=s.Field<int>("length"),
                 Content=new Content(s.Field<string>("text")),
                 CanMove=s.Field<bool>("canMove"),
                 CanChangeLength=s.Field<bool>("canChangeLength") })
@@ -60,16 +60,16 @@ namespace Tymeline.API.Daos
             TymelineObject tymelineObject;
             try{
                 
-                string sqlCmd = $@"
+                string sqlCmd = @"
                 select timeline.id,
                 timeline.start,
                 timeline.length,
                 timeline.canMove,
                 timeline.canChangeLength,
                 content.text 
-                from TymelineObjects timeline inner join `Content` content on content.id = timeline.id where timeline.id = {id}";
-              
+                from TymelineObjects timeline inner join `Content` content on content.id = timeline.ContentID where timeline.id = @id";
                 MySqlDataAdapter adr = new MySqlDataAdapter(sqlCmd, sqlConnection);
+                adr.SelectCommand.Parameters.AddWithValue("@id",id);
                 adr.SelectCommand.CommandType = CommandType.Text;
                 DataTable dt = new DataTable();
                 adr.Fill(dt); //opens and closes the DB connection automatically !! (fetches from pool)

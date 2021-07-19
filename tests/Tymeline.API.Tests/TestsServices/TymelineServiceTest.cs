@@ -35,7 +35,7 @@ namespace Tymeline.API.Tests
 
         [SetUp]
         public void SetUp(){
-            tymelineList = setupTymelineList();
+            tymelineList = TestUtil.setupTymelineList();
         }
 
 
@@ -45,9 +45,12 @@ namespace Tymeline.API.Tests
         }
 
         TymelineObject mockCreate(TymelineObject to){
-                to.Id = new Guid().ToString();
+            if(tymelineList.Exists(x => x.Id.Equals(to.Id))){
+                throw new ArgumentException("you cannot create a TymelineObject with an existing id!");
+            }else {
                 tymelineList.Add(to);
                 return to;
+            }
             
         }
 
@@ -78,39 +81,6 @@ namespace Tymeline.API.Tests
             return s.Distinct().ToList();
         }
 
-         private static Random random = new Random();
-        public static string RandomString(int length)
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-            .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
-
-        public static bool RandomBool()
-        {
-            return (random.Next() % 2)==1;
-        }
-
-       
-
-
-        static private List<TymelineObject> setupTymelineList(){
-            List<TymelineObject> array = new List<TymelineObject>();
-            for (int i = 1; i < 100; i++)
-            {
-
-                array.Add( new TymelineObject() {
-                    Id=i.ToString(),
-                    Length=500+(random.Next() % 5000),
-                    Content=new Content(RandomString(12)),
-                    Start=10000+(random.Next() % 5000),
-                    CanChangeLength=RandomBool(),
-                    CanMove=RandomBool()
-                    }
-                );
-            }
-            return array;
-        }
 
         [Test]
         public void TestGetAll()
@@ -154,22 +124,29 @@ namespace Tymeline.API.Tests
         [Test]
 
         public void Test_Create_Element_Expect_Element_to_be_Returned(){
-            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id="asd",Length=12389,Start=12379};
+            var element = new TymelineObject{Id=Guid.NewGuid().ToString(),CanChangeLength=true,CanMove=true,Content=new Content("asd"),Length=12389,Start=12379};
             _timelineService.Create(element);
             Assert.AreEqual(element,_timelineService.GetById(element.Id));
         }
 
         [Test]
-        public void Test_Create_Existing_Element_Expect_UpdatedElement_To_Differ_From_Existing_Element(){
+        public void Test_Create_Existing_Element_Expect_ArgumentException(){
+            // if element already exists (id!)
+            // create a new element with a different id
+            // or throw an error? you cannot create elements with ids.
+
+            // decided: throw error!
+            var truth = _timelineService.GetById("5");
             var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id="5",Length=12389,Start=12379};
-            _timelineService.Create(element);
-            Assert.IsFalse(_timelineService.GetById("5").Same(element));
+            Assert.Throws<ArgumentException>(()=> _timelineService.Create(element));
+
+
         }
 
 
         [Test]
         public void Test_Create_Existing_Element_Expect_NewElement_To_Be_Itself(){
-            var element = new TymelineObject{CanChangeLength=true,CanMove=true,Content=new Content("asd"),Id="5",Length=12389,Start=12379};
+            var element = new TymelineObject{Id=Guid.NewGuid().ToString(),CanChangeLength=true,CanMove=true,Content=new Content("asd"),Length=12389,Start=12379};
             var newElement = _timelineService.Create(element);
             Assert.IsTrue(_timelineService.GetById(newElement.Id).Same(newElement));
         }

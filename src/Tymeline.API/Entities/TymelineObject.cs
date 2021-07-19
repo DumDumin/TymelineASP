@@ -1,3 +1,5 @@
+using System;
+
 public class Content{
     public string Text { get; set; }
 
@@ -25,6 +27,15 @@ public class TymelineObject{
 
     public TymelineObject(string identifier, int lenghtTime, Content contents,int startTime,bool cChangeLength,bool cMove){
         Id=identifier;
+        Length = lenghtTime;
+        Content = contents;
+        Start = startTime;
+        CanChangeLength = cChangeLength;
+        CanMove =cMove;
+    }
+
+     public TymelineObject( int lenghtTime, Content contents,int startTime,bool cChangeLength,bool cMove){
+        Id = Guid.NewGuid().ToString();
         Length = lenghtTime;
         Content = contents;
         Start = startTime;
