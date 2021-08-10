@@ -49,8 +49,6 @@ namespace Tymeline.API
             })
             .AddJwtBearer(config =>  
             {   
-                // config.Audience = Configuration["AppSettings:Hostname"];
-                // config.Authority = Configuration["AppSettings:Hostname"];
                 config.RequireHttpsMetadata = false;  
                 config.SaveToken = true;  
                 config.TokenValidationParameters = new TokenValidationParameters()  
@@ -68,6 +66,7 @@ namespace Tymeline.API
 
             
             services.AddTransient<MySqlConnection>(_ => new MySqlConnection(Configuration["AppSettings:SqlConnection:MySqlConnectionString"]));
+            services.AddSingleton<IDataRolesService,DataRolesService>();
             services.AddSingleton<IJwtService,JwtService>();
             services.AddSingleton<UtilService>();
             services.AddSingleton<IAuthDao,AuthDao>();

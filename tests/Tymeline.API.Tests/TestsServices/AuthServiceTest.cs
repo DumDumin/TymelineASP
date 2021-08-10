@@ -1,23 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Moq;
 using NUnit.Framework;
-using Tymeline.API.Controllers;
+
 
 namespace Tymeline.API.Tests
 {
     public class AuthServiceTest : OneTimeSetUpAttribute
     {
         IAuthService _authService;
+        private Mock<IDataRolesService> _rolesService;
         Moq.Mock<IAuthDao> _authDao;
         Dictionary<string,IUser> userdict;
 
@@ -32,8 +25,10 @@ namespace Tymeline.API.Tests
             _appSettings = _appSettingsOptions.Value;
             _authDao = new Moq.Mock<IAuthDao>();
             _utilService = new UtilService();
-            _authService = new AuthService(_authDao.Object, _utilService, _appSettingsOptions);
-            _jwtService = new JwtService(_appSettingsOptions);
+            _rolesService = new Mock<IDataRolesService>();
+            _authService = new AuthService(_authDao.Object, _utilService,_rolesService.Object, _appSettingsOptions);
+            _jwtService = new JwtService(_rolesService.Object,_appSettingsOptions);
+            _rolesService.Setup(s => s.GetUserPermissions(It.IsAny<string>())).Returns((string email)=> mockGetUserPermissions(email));
             _authDao.Setup(s => s.getUserByMail(It.IsAny<string>())).Returns((string mail) => MockGetUserByMail(mail));
             _authDao.Setup(s => s.GetUsers()).Returns(() => MockGetUser());
             _authDao.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials user) => MockRegister(user));
@@ -55,6 +50,12 @@ namespace Tymeline.API.Tests
             userdict.Add(newUser.Mail,newUser);
             return newUser;
 
+        }
+
+         private IUserPermissions mockGetUserPermissions(string email){
+            var UserPermissions = new UserPermissions(email, new List<IPermission>());
+            UserPermissions.Permissions.Add(new Permission("test","value"));
+            return UserPermissions;
         }
 
         void MockRemoveUser(IUser user){
@@ -227,7 +228,7 @@ namespace Tymeline.API.Tests
             string passwd = "hunter13";
             IUserCredentials credentials = new UserCredentials(mail,passwd);
             IUser user = User.CredentialsToUser(credentials);
-            var jwtString = _jwtService.createJwt(user);
+            var jwtString = _jwtService.createJwt(user.Mail);
             Assert.NotNull(jwtString);
         }
     }

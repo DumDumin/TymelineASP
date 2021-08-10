@@ -15,4 +15,9 @@ public interface IAuthService
 
     IUserPermissions GetUserPermissions(string email);
 
+    void SetUserPermissions(IUserPermissions userPermissions);
+
+    void AddUserPermission(string email, IPermission permission);
+    
+
 }

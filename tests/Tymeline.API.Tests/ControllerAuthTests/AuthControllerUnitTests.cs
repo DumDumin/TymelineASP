@@ -27,7 +27,7 @@ namespace Tymeline.API.Tests
         private WebApplicationFactory<Startup> _factory;
         private HttpClient _client;
         private Moq.Mock<IAuthService> _authService;
-
+        private Mock<IDataRolesService> _dataRolesService;
         private UtilService _utilService;
         AppSettings _appSettings;
         Dictionary<string,IUser> userdict;
@@ -38,6 +38,7 @@ namespace Tymeline.API.Tests
 
             _factory = new WebApplicationFactory<Startup>();
             _authService = new Moq.Mock<IAuthService>();
+            _dataRolesService = new Mock<IDataRolesService>();
             _utilService = new UtilService();
 
 
@@ -45,14 +46,15 @@ namespace Tymeline.API.Tests
             {
                 builder.ConfigureTestServices(services => 
                 {   
+                    services.AddSingleton<IDataRolesService>(s => _dataRolesService.Object);
                     services.AddSingleton<IJwtService,JwtService>();      
-                    services.AddScoped<IAuthService>(s => _authService.Object);
+                    services.AddSingleton<IAuthService>(s => _authService.Object);
                     services.AddSingleton<UtilService>(s => _utilService);
                 });
-            }).CreateClient();  
+            }).CreateClient();
+            _dataRolesService.Setup(s => s.GetUserPermissions(It.IsAny<string>())).Returns((string email)=> mockGetUserPermissions(email));
             _authService.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials cc) =>  MockRegister(cc));
             _authService.Setup(s => s.getUsers()).Returns(() =>  MockGetUsers());
-            _authService.Setup(s => s.Login(It.IsAny<UserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
             _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
             _authService.Setup(s => s.GetUserPermissions(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
         }
@@ -152,7 +154,6 @@ namespace Tymeline.API.Tests
             Assert.AreEqual(201,(int)statusCode);
             Assert.AreEqual(credentials.Email,JsonConvert.DeserializeObject<User>(responseString).Mail);
             Assert.AreEqual(JsonConvert.SerializeObject(User.CredentialsToUser(credentials)),responseString);
-
         }
 
 
@@ -186,7 +187,6 @@ namespace Tymeline.API.Tests
         [Test]
         public async Task TestUserList_expect_200_with_one_users()
         {
-            
             var response = await _client.GetAsync("https://localhost:5001/auth/users");
             var responseObject = await response.Content.ReadFromJsonAsync<List<User>>();
             var statusCode = response.StatusCode;
@@ -211,7 +211,7 @@ namespace Tymeline.API.Tests
             IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
             var responseObject = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(201,(int)statusCode);
+            Assert.AreEqual(200,(int)statusCode);
             Assert.IsNotEmpty(cookies);
         }
 
@@ -257,9 +257,9 @@ namespace Tymeline.API.Tests
             var response = await _client.PostAsync(uriLogin.AbsoluteUri,content);
            
             IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
-            Uri uriTest = new Uri("https://localhost:5001/auth/testjwt");
             string jwt = cookies.First(s => s.StartsWith("jwt"));
             jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=","");
+            Uri uriTest = new Uri("https://localhost:5001/auth/testjwt");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",jwt);
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
@@ -287,7 +287,6 @@ namespace Tymeline.API.Tests
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var statusCode = responseTest.StatusCode;
             Assert.AreEqual(HttpStatusCode.OK,statusCode);
-
         }
 
 
@@ -303,7 +302,6 @@ namespace Tymeline.API.Tests
             Uri uriLogin = new Uri("https://localhost:5001/auth/login");
             var r = await _client.PostAsync(uriLogin.AbsoluteUri,content);
             var rr = await r.Content.ReadAsStringAsync();
-            // var user = JsonConvert.DeserializeObject<User>(rr);
             IEnumerable<string> cookies = r.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
             Uri uriTest = new Uri("https://localhost:5001/auth/userInfo");
             string jwt = cookies.First(s => s.StartsWith("jwt"));
@@ -318,6 +316,8 @@ namespace Tymeline.API.Tests
 
             
         }
+
+        
 
           
     }

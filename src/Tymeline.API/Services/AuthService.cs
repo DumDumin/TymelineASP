@@ -9,11 +9,16 @@ using Microsoft.IdentityModel.Tokens;
 public class AuthService : IAuthService
 {   
     private IAuthDao AuthDao;
-
     private UtilService _utilService;
     private readonly AppSettings _appSettings;
-    public AuthService(IAuthDao authDao,UtilService utilService, IOptions<AppSettings> appSettings){
+    private IDataRolesService _dataRolesService;
+    public AuthService(
+    IAuthDao authDao,
+    UtilService utilService,
+    IDataRolesService dataRolesService,
+    IOptions<AppSettings> appSettings){
         AuthDao = authDao;
+        _dataRolesService = dataRolesService;
         _appSettings = appSettings.Value;
         _utilService = utilService;
     }
@@ -74,6 +79,16 @@ public class AuthService : IAuthService
 
     public IUserPermissions GetUserPermissions(string email)
     {
-        throw new NotImplementedException();
+        return _dataRolesService.GetUserPermissions(email);
+    }
+
+    public void SetUserPermissions(IUserPermissions userPermissions)
+    {
+        _dataRolesService.SetUserPermissions(userPermissions);
+    }
+
+    public void AddUserPermission(string email, IPermission permission)
+    {
+        _dataRolesService.AddUserPermission(email,permission);
     }
 }

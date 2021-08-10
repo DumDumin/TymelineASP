@@ -28,7 +28,7 @@ public class ListIPermissionsConverter : JsonConverter
 
                 // Create a form field instance by the field type ID.
                 var jsonObject = item as JObject;
-                var key = jsonObject["key"].Value<string>();
+                var key = jsonObject["type"].Value<string>();
                 var value = jsonObject["value"].Value<string>();
                 var instance = new Permission(key,value);
 

@@ -2,6 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 
 public interface IJwtService{
 
-    string createJwt(IUser user);
+    string createJwt(string userMail);
     JwtSecurityToken verifyJwt(string jwt);
 }

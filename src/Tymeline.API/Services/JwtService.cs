@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -14,14 +15,20 @@ using Microsoft.IdentityModel.Tokens;
 public class JwtService : IJwtService
 {
 
+
+    private IDataRolesService _rolesService;
     private readonly AppSettings _appSettings;
-    public JwtService(IOptions<AppSettings> appSettings){
+    public JwtService(IDataRolesService rolesService,IOptions<AppSettings> appSettings){
         _appSettings = appSettings.Value;
+        _rolesService = rolesService;
     }
     
 
-    public string createJwt(IUser user)
+    public string createJwt(string userMail)
     {
+        var userRoles = _rolesService.GetUserPermissions(userMail);
+
+
         var utcNow = DateTime.UtcNow; 
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
@@ -31,16 +38,21 @@ public class JwtService : IJwtService
                 Subject = new ClaimsIdentity(new Claim[] 
                 {
                     //add new claims in here
-                    new Claim(ClaimTypes.Name, user.Mail),
-                    new Claim("name", user.Mail),
-                    new Claim(ClaimTypes.Email, user.Mail),
-                    new Claim(ClaimTypes.Role, "admin")
+                    
+  
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Audience = _appSettings.Hostname,
                 Issuer = _appSettings.Hostname,
             };
+
+        var claimlist = new List<Claim>();
+        userRoles.Permissions.ForEach(permission => claimlist.Add(new Claim(permission.Type,permission.Value)));
+        claimlist.Add(new Claim(ClaimTypes.Name, userMail));
+        claimlist.Add(new Claim(ClaimTypes.Role, "admin"));
+        tokenDescriptor.Subject.AddClaims(claimlist);
+
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
         

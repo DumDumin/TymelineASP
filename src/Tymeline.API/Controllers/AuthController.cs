@@ -29,7 +29,7 @@ namespace Tymeline.API.Controllers
             _JwtService = jwtService;
         }
 
-        private void constructLoginHeaders(IUser user)
+        private void constructJWTHeaders(string mail)
         {
             // TODO DOMAIN NEEDS TO BE SET BY ENV VARIABLE, just like path in launch setting
             CookieOptions opt = new CookieOptions();
@@ -38,7 +38,7 @@ namespace Tymeline.API.Controllers
             opt.Secure = true;
             opt.SameSite = SameSiteMode.Strict;
             opt.MaxAge = TimeSpan.FromHours(12);
-            Response.Cookies.Append("jwt", _JwtService.createJwt(user), opt);
+            Response.Cookies.Append("jwt", _JwtService.createJwt(mail), opt);
         }
 
 
@@ -78,8 +78,8 @@ namespace Tymeline.API.Controllers
             try
             {
                 IUser user = _authService.Login(credentials);
-                constructLoginHeaders(user);
-                return StatusCode(201, user);
+                constructJWTHeaders(user.Mail);
+                return StatusCode(200, user);
             }
              catch (ArgumentException)
             {
@@ -105,10 +105,50 @@ namespace Tymeline.API.Controllers
         [Route("userInfo")]
         public ActionResult<IUserPermissions> userInfo(){
             
-
+            // please do some tests!
             return StatusCode(200,_authService.GetUserPermissions(User.Identity.Name));
         }
 
 
+        [Authorize]
+        [HttpPost]
+        [Route("setpermissions")]
+        public ActionResult<string> SetPermissions([FromBody] List<Permission> userPermissions){
+            try
+            {
+            var iPermissionList = new List<IPermission>();
+            userPermissions.ForEach(item => iPermissionList.Add(item));
+            var userPerm = new UserPermissions(User.Identity.Name,iPermissionList);
+            _authService.SetUserPermissions(userPerm);
+
+            constructJWTHeaders(User.Identity.Name);
+            return StatusCode(200);
+                
+            }
+            catch (System.Exception)
+            {
+                
+                return StatusCode(500);
+            }
+        }
+
+
+        [Authorize]
+        [HttpPost]
+        [Route("addpermission")]
+        public ActionResult<string> AddPermission([FromBody] Permission userPermission){
+            try
+            {
+            _authService.AddUserPermission(User.Identity.Name,userPermission);
+            constructJWTHeaders(User.Identity.Name);
+            return StatusCode(200);
+                
+            }
+            catch (System.Exception)
+            {
+                
+                return StatusCode(500);
+            }
+        }
     }
 }

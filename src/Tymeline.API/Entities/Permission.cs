@@ -2,11 +2,11 @@ public class Permission : IPermission
 {
 
     public Permission(){}
-    public Permission(string key, string value){
-        this.Key = key;
+    public Permission(string type, string value){
+        this.Type = type;
         this.Value = value;
     }
-    public string Key { get ; set ; }
+    public string Type { get ; set ; }
     public string Value { get ; set ; }
 
     public override bool Equals(object obj)
@@ -17,6 +17,11 @@ public class Permission : IPermission
             return false;
         }
         
-        return this.Key.Equals(((Permission)obj).Key)&&this.Value.Equals(((Permission)obj).Value);
+        return this.Type.Equals(((Permission)obj).Type)&&this.Value.Equals(((Permission)obj).Value);
+    }
+
+    public override int GetHashCode()
+    {
+        return this.Type.GetHashCode()+this.Value.GetHashCode();
     }
 }

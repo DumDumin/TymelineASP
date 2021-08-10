@@ -1,4 +1,4 @@
 public interface IPermission{
-    string Key{get; set;}
+    string Type{get; set;}
     string Value{get;set;}
 }
