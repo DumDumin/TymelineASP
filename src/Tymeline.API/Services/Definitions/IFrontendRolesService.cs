@@ -10,5 +10,5 @@ public interface IFrontendRolesService{
 
     void AddUserPermissions(string email, IPermission permission);
 
-    void RemoveUserPermissions(string email, string key);
+    void RemoveUserPermissions(string email, IPermission permission);
 }

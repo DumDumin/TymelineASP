@@ -19,6 +19,8 @@ using System.Security.Claims;
 using AutoFixture.NUnit3;
 using System.IdentityModel.Tokens.Jwt;
 using FluentAssertions;
+using AutoFixture.Kernel;
+using AutoFixture;
 
 namespace Tymeline.API.Tests
 {
@@ -41,6 +43,13 @@ namespace Tymeline.API.Tests
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
+
+            // var fixture = new AutoFixture.Fixture();
+            // fixture.Customizations.Add(new TypeRelay(typeof(IPermission),typeof(Permission)));
+
+
+
+
             _appSettingsOptions = Options.Create<AppSettings>(new AppSettings());
             _appSettings = _appSettingsOptions.Value;
             _factory = new WebApplicationFactory<Startup>();
@@ -49,6 +58,7 @@ namespace Tymeline.API.Tests
             _rolesService = new Mock<IDataRolesService>();
             _jwtService = new JwtService(_rolesService.Object, _appSettingsOptions);
             
+
             _client = _factory.WithWebHostBuilder(builder =>
             {
                 builder.ConfigureTestServices(services =>
@@ -62,13 +72,18 @@ namespace Tymeline.API.Tests
             _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
             _authService.Setup(s => s.GetUserPermissions(It.IsAny<string>())).Returns((string email) => _rolesService.Object.GetUserPermissions(email));
             _authService.Setup(s => s.SetUserPermissions(It.IsAny<IUserPermissions>())).Callback((IUserPermissions permissions) => _rolesService.Object.SetUserPermissions(permissions));
-            _authService.Setup(s => s.AddUserPermission(It.IsAny<string>(),It.IsAny<IPermission>())).Callback((string email, IPermission permission) => _rolesService.Object.AddUserPermission(email,permission));
+            _authService.Setup(s => s.AddUserPermission(It.IsAny<IUserPermission>())).Callback((IUserPermission userPermission) => _rolesService.Object.AddUserPermission(userPermission.Email,userPermission.Permission));
             
             _rolesService.Setup(s => s.GetUserPermissions(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
             _rolesService.Setup(s => s.SetUserPermissions(It.IsAny<IUserPermissions>())).Callback((IUserPermissions permissions) => mockSetRoles(permissions));
             _rolesService.Setup(s => s.AddUserPermission(It.IsAny<string>(),It.IsAny<IPermission>())).Callback((string email, IPermission permission) => MockAddRoles(email,permission));
+        
+        
+            _authService.Setup(s => s.getUsers()).Returns(() =>  MockGetUsers());
         }
 
+
+      
 
         [SetUp]
         public void Setup()
@@ -81,6 +96,16 @@ namespace Tymeline.API.Tests
         public void TearDown(){
             _client.DefaultRequestHeaders.Clear();
         }
+
+
+
+        private List<IUser> MockGetUsers()
+        {
+            return userdict.Values.ToList().Select(element => element).ToList();
+
+        }
+
+
 
         void MockAddRoles(string email, IPermission permission){
             roles.TryGetValue(email,out var userRoles);
@@ -120,7 +145,7 @@ namespace Tymeline.API.Tests
             for (int i = 2; i < 100; i++)
             {
                 User user = new User($"test{i}@email.de", passwordHasher.Hash("hunter12"));
-                users.Add(user.Mail, user);
+                users.Add(user.Email, user);
             }
             return users;
         }
@@ -146,7 +171,7 @@ namespace Tymeline.API.Tests
             }
         }
 
-        private async Task Login()
+        private async Task<UserCredentials> Login()
         {
             UserCredentials credentials = new UserCredentials("test5@email.de", "hunter12");
             JsonContent content = JsonContent.Create(credentials);
@@ -160,6 +185,17 @@ namespace Tymeline.API.Tests
             string jwt = cookies.First(s => s.StartsWith("jwt"));
             jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=", "");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+            return credentials;
+        }
+
+
+        private async Task<User> GetRandomUser()
+        {
+            var response = await _client.GetAsync("https://localhost:5001/auth/users");
+            var responseObject = await response.Content.ReadFromJsonAsync<List<User>>();
+            var statusCode = response.StatusCode;
+            User user = responseObject.RandomElement();
+            return user;
         }
 
         private JwtSecurityToken ExtractTokenFromCookies(IEnumerable<string> c)
@@ -171,12 +207,13 @@ namespace Tymeline.API.Tests
         }
 
         [Test,AutoData]
-        public async Task Test_UserInfo_with_registeredAccount_Set_Permissions_Return_New_Permissions_inUserInfo(List<Permission> permissionList)
+        public async Task Test_UserInfo_with_registeredAccount_Set_Permissions_Return_New_Permissions_inUserInfo(HttpUserPermissions userPermissions)
         {
-            await Login();
-            JsonContent jsonList = JsonContent.Create(permissionList);
+            var loginData = await Login();
+            userPermissions.Email = loginData.Email;
+            JsonContent jsonList = JsonContent.Create(userPermissions);
 
-            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setpermissions");
+            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setroles");
             var setPermissions = await _client.PostAsync(uriSetPermissions, jsonList);
             var responseObjectsetPermissions = await setPermissions.Content.ReadAsStringAsync();
             Assert.AreEqual(HttpStatusCode.OK, setPermissions.StatusCode);
@@ -185,18 +222,20 @@ namespace Tymeline.API.Tests
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var parsedObject = JsonConvert.DeserializeObject<UserPermissions>(responseObject);
-            parsedObject.Permissions.Should().Contain(permissionList[0]).And.Contain(permissionList[1]).And.Contain(permissionList[2]);
+            parsedObject.Permissions.Should().Contain(userPermissions.Permissions[0]).And.Contain(userPermissions.Permissions[1]).And.Contain(userPermissions.Permissions[2]);
         }
 
         [Test,AutoData]
-        public async Task Test_UserInfo_with_registeredAccount_Set_Permissions_Return_New_Permissions_inJWT(List<Permission> testList)
+        public async Task Test_UserInfo_with_registeredAccount_Set_Role_Return_New_Role_inJWT(List<Permission> testList)
         {
-            await Login();
 
-            JsonContent jsonList = JsonContent.Create(testList);
-
-            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setpermissions");
-            var setPermissions = await _client.PostAsync(uriSetPermissions, jsonList);
+            //setup
+            UserCredentials creds = await Login();
+            
+            //given
+            HttpUserPermissions expectedPermission = new HttpUserPermissions(creds.Email,testList);
+            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setroles");
+            var setPermissions = await _client.PostAsync(uriSetPermissions, JsonContent.Create(expectedPermission));
             var responseObjectsetPermissions = await setPermissions.Content.ReadAsStringAsync();
             Assert.AreEqual(HttpStatusCode.OK, setPermissions.StatusCode);
             IEnumerable<string> c = setPermissions.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
@@ -205,20 +244,109 @@ namespace Tymeline.API.Tests
         }
 
         [Test, AutoData]
-        public async Task Test_Add_Role_With_Valid_Role(Permission expectedPermission){
-            await Login();
-            Uri uriAddPermission = new Uri("https://localhost:5001/auth/addpermission");
+        public async Task Test_Add_Role_With_Valid_Role(Permission ep){
+            //setup
+            UserCredentials creds = await Login();
+            
+            //given
+            HttpUserPermission expectedPermission = new HttpUserPermission(creds.Email,ep);
+            Uri uriAddPermission = new Uri("https://localhost:5001/auth/addrole");
             var setPermissions = await _client.PostAsync(uriAddPermission,JsonContent.Create(expectedPermission));
             var responseObject = await setPermissions.Content.ReadAsStringAsync();
             IEnumerable<string> cookies = setPermissions.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
             JwtSecurityToken parsedJwt = ExtractTokenFromCookies(cookies);
-            parsedJwt.Claims.ToList().Select(claim => new Permission(claim.Type, claim.Value)).ToList().Should().Contain(expectedPermission);
+            //assert
+            parsedJwt.Claims.ToList().Select(claim => new Permission(claim.Type, claim.Value)).ToList().Should().Contain(expectedPermission.Permission.As<Permission>());
+        }
+
+
+
+
+
+        [Test, AutoData]
+
+        public async Task Test_Get_Roles(Permission ep){
+            UserCredentials creds = await Login();
+
+            User user = await GetRandomUser();
+
+            HttpUserPermission expectedPermission = new HttpUserPermission(user.Email,ep);
+            Uri uriAddPermission = new Uri("https://localhost:5001/auth/addrole");
+            var setPermissions = await _client.PostAsync(uriAddPermission,JsonContent.Create(expectedPermission));
+
+
+            var roleResponse = await _client.GetAsync($"https://localhost:5001/auth/getroles/{user.Email}");
+
+            var s = await roleResponse.Content.ReadAsStringAsync();
+            var roleResponseObject = JsonConvert.DeserializeObject<UserPermissions>(s);
+            var roleStatusCode = roleResponse.StatusCode;
+
+            roleResponseObject.Email.Should().Be(user.Email);
+            roleResponseObject.Permissions.Should().BeOfType<List<IPermission>>();
+            roleResponseObject.Permissions.Should().Contain(ep);
+
+        }
+
+
+        [Test, AutoData]
+        public async Task Test_Get_Roles_Set(List<Permission> testList)
+        {
+            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setroles");
+            //setup
+            UserCredentials creds = await Login();
+
+            User user = await GetRandomUser();
+
+            //given
+
+            HttpUserPermissions expectedPermission = new HttpUserPermissions(user.Email, testList); //create new HttpUserPermission
+            var setPermissions = await _client.PostAsync(uriSetPermissions, JsonContent.Create(expectedPermission));
+            var roleResponse = await _client.GetAsync($"https://localhost:5001/auth/getroles/{user.Email}");
+
+            var s = await roleResponse.Content.ReadAsStringAsync();
+            var roleResponseObject = JsonConvert.DeserializeObject<UserPermissions>(s);
+            var roleStatusCode = roleResponse.StatusCode;
+
+            roleResponseObject.Email.Should().Be(user.Email);
+            roleResponseObject.Permissions.Should().BeOfType<List<IPermission>>().And.Contain(testList);
+
+        }
+
+
+
+        [Test, AutoData]
+        public async Task Test_Remove_Role_With_Valid_Role(Permission ep, Permission ep_keep){
+            // setup
+            UserCredentials creds = await Login();
+            User user = await GetRandomUser();
+            HttpUserPermission expectedPermission = new HttpUserPermission(user.Email,ep);
+            HttpUserPermission expectedPermission_keep = new HttpUserPermission(user.Email,ep_keep);
+            Uri uriAddPermission = new Uri("https://localhost:5001/auth/addrole");
+
+            //given
+
+            await _client.PostAsync(uriAddPermission, JsonContent.Create(expectedPermission));
+            await _client.PostAsync(uriAddPermission, JsonContent.Create(expectedPermission_keep));
+            Uri uriRemovePermission = new Uri("https://localhost:5001/auth/removerole");
+            await _client.PostAsync(uriRemovePermission,JsonContent.Create(expectedPermission));
+
+           
+            //assert
+
+            var roleResponse = await _client.GetAsync($"https://localhost:5001/auth/getroles/{user.Email}");
+
+            var s = await roleResponse.Content.ReadAsStringAsync();
+            var roleResponseObject = JsonConvert.DeserializeObject<UserPermissions>(s);
+            var roleStatusCode = roleResponse.StatusCode;
+
+            roleResponseObject.Email.Should().Be(user.Email);
+            roleResponseObject.Permissions.Should().BeOfType<List<IPermission>>().And.Contain(ep_keep).And.NotContain(ep);
 
 
         }
     }
-
 }
+
 
 
 

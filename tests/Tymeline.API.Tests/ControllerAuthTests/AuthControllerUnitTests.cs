@@ -71,6 +71,25 @@ namespace Tymeline.API.Tests
             return UserPermissions;
         }
 
+
+
+         private async Task<UserCredentials> Login()
+        {
+            UserCredentials credentials = new UserCredentials("test5@email.de", "hunter12");
+            JsonContent content = JsonContent.Create(credentials);
+
+            Uri uriLogin = new Uri("https://localhost:5001/auth/login");
+            var response = await _client.PostAsync(uriLogin.AbsoluteUri, content);
+            var result = response.Content.ReadAsStringAsync().Result;
+            var user = JsonConvert.DeserializeObject<User>(result);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
+            string jwt = cookies.First(s => s.StartsWith("jwt"));
+            jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=", "");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+            return credentials;
+        }
+
         private Dictionary<string,IUser> createUserDict()
         {   
             var passwordHasher = new PasswordHasher();
@@ -78,7 +97,7 @@ namespace Tymeline.API.Tests
             for (int i = 2; i < 100; i++)
             {
                 User user = new User($"test{i}@email.de",passwordHasher.Hash("hunter12"));
-                users.Add(user.Mail,user);
+                users.Add(user.Email,user);
             }
             return users;
         }
@@ -90,11 +109,11 @@ namespace Tymeline.API.Tests
                 if(_utilService.IsValidEmail(credentials.Email).Equals(true)){
 
                     User user = User.CredentialsToUser(credentials);
-                    if (userdict.ContainsKey(user.Mail)){
+                    if (userdict.ContainsKey(user.Email)){
                         throw new ArgumentException();
                     }
                     else {
-                        userdict.Add(user.Mail, user);
+                        userdict.Add(user.Email, user);
                         return user;
                     }
 
@@ -152,7 +171,7 @@ namespace Tymeline.API.Tests
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
             Assert.AreEqual(201,(int)statusCode);
-            Assert.AreEqual(credentials.Email,JsonConvert.DeserializeObject<User>(responseString).Mail);
+            Assert.AreEqual(credentials.Email,JsonConvert.DeserializeObject<User>(responseString).Email);
             Assert.AreEqual(JsonConvert.SerializeObject(User.CredentialsToUser(credentials)),responseString);
         }
 
@@ -248,19 +267,8 @@ namespace Tymeline.API.Tests
 
         [Test]
         public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_JWT_Expect_Success(){
-            UserCredentials credentials = new UserCredentials("test5@email.de","hunter12");
-
-            JsonContent content =  JsonContent.Create(credentials);
-           
-            
-            Uri uriLogin = new Uri("https://localhost:5001/auth/login");
-            var response = await _client.PostAsync(uriLogin.AbsoluteUri,content);
-           
-            IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
-            string jwt = cookies.First(s => s.StartsWith("jwt"));
-            jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=","");
+            await Login();
             Uri uriTest = new Uri("https://localhost:5001/auth/testjwt");
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",jwt);
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var statusCode = responseTest.StatusCode;
@@ -270,19 +278,8 @@ namespace Tymeline.API.Tests
 
         [Test]
         public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_Authentication_expect_Claims(){
-            UserCredentials credentials = new UserCredentials("test5@email.de","hunter12");
-
-            JsonContent content =  JsonContent.Create(credentials);
-           
-            
-            Uri uriLogin = new Uri("https://localhost:5001/auth/login");
-            var response = await _client.PostAsync(uriLogin.AbsoluteUri,content);
-           
-            IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
+            await Login();
             Uri uriTest = new Uri("https://localhost:5001/auth/userInfo");
-            string jwt = cookies.First(s => s.StartsWith("jwt"));
-            jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=","");
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",jwt);
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var statusCode = responseTest.StatusCode;
@@ -293,20 +290,9 @@ namespace Tymeline.API.Tests
 
         [Test]
         public async Task Test_UserInfo_with_registeredAccount_Return_Permissions_for_User(){
-            UserCredentials credentials = new UserCredentials("test5@email.de","hunter12");
             
-
-            JsonContent content =  JsonContent.Create(credentials);
-           
-            
-            Uri uriLogin = new Uri("https://localhost:5001/auth/login");
-            var r = await _client.PostAsync(uriLogin.AbsoluteUri,content);
-            var rr = await r.Content.ReadAsStringAsync();
-            IEnumerable<string> cookies = r.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
+            await Login();
             Uri uriTest = new Uri("https://localhost:5001/auth/userInfo");
-            string jwt = cookies.First(s => s.StartsWith("jwt"));
-            jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=","");
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",jwt);
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var parsedObject = JsonConvert.DeserializeObject<UserPermissions>(responseObject);

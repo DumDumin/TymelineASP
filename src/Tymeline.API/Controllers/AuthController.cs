@@ -63,6 +63,7 @@ namespace Tymeline.API.Controllers
            
         }
 
+        [Authorize]
         [HttpGet]
         [Route("users")]
         public ActionResult<List<IUser>> ListUsers()
@@ -78,7 +79,7 @@ namespace Tymeline.API.Controllers
             try
             {
                 IUser user = _authService.Login(credentials);
-                constructJWTHeaders(user.Mail);
+                constructJWTHeaders(user.Email);
                 return StatusCode(200, user);
             }
              catch (ArgumentException)
@@ -105,22 +106,39 @@ namespace Tymeline.API.Controllers
         [Route("userInfo")]
         public ActionResult<IUserPermissions> userInfo(){
             
-            // please do some tests!
+            // returns the permissions for the current user
             return StatusCode(200,_authService.GetUserPermissions(User.Identity.Name));
         }
 
 
         [Authorize]
         [HttpPost]
-        [Route("setpermissions")]
-        public ActionResult<string> SetPermissions([FromBody] List<Permission> userPermissions){
+        [Route("setroles")]
+        public ActionResult<string> SetPermissions([FromBody] HttpUserPermissions userPermissions){
             try
             {
-            var iPermissionList = new List<IPermission>();
-            userPermissions.ForEach(item => iPermissionList.Add(item));
-            var userPerm = new UserPermissions(User.Identity.Name,iPermissionList);
-            _authService.SetUserPermissions(userPerm);
+            _authService.SetUserPermissions(userPermissions.toIUserPermissions());
 
+            constructJWTHeaders(User.Identity.Name);
+            return StatusCode(200);
+                
+            }
+            catch (System.Exception)
+            {
+                
+                return StatusCode(500);
+            }
+        }
+
+        
+        [Authorize]
+        [HttpPost]
+        [Route("addrole")]
+        public ActionResult<string> AddRole( [FromBody] HttpUserPermission userPermission){
+            try
+            {
+
+            _authService.AddUserPermission(userPermission.ToIUserPermission());
             constructJWTHeaders(User.Identity.Name);
             return StatusCode(200);
                 
@@ -135,13 +153,32 @@ namespace Tymeline.API.Controllers
 
         [Authorize]
         [HttpPost]
-        [Route("addpermission")]
-        public ActionResult<string> AddPermission([FromBody] Permission userPermission){
+        [Route("addrole")]
+        public ActionResult<string> RemoveRole( [FromBody] HttpUserPermission userPermission){
             try
             {
-            _authService.AddUserPermission(User.Identity.Name,userPermission);
+
+            _authService.RemoveUserRole(userPermission.ToIUserPermission());
             constructJWTHeaders(User.Identity.Name);
             return StatusCode(200);
+                
+            }
+            catch (System.Exception)
+            {
+                
+                return StatusCode(500);
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("getroles/{email}")]
+        public ActionResult<IUserPermissions> GetRole(string email){
+            try
+            {
+            // returns the permissions for some user
+            // TODO should only be allowed for certain roles!
+            return StatusCode(200,_authService.GetUserPermissions(email));
                 
             }
             catch (System.Exception)

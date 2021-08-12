@@ -58,16 +58,16 @@ namespace Tymeline.API.Tests
             for (int i = 2; i < 100; i++)
             {
                 User user = new User($"test{i}@email.de",passwordHasher.Hash("hunter12"));
-                users.Add(user.Mail,user);
+                users.Add(user.Email,user);
             }
             return users;
         }
 
         IUser MockChangePassword(IUser user, string password){
-            IUser oldUser = userdict.GetValueOrDefault(user.Mail);
+            IUser oldUser = userdict.GetValueOrDefault(user.Email);
             var newUser = oldUser.updatePassword(password);
-            userdict.Remove(oldUser.Mail);
-            userdict.Add(newUser.Mail,newUser);
+            userdict.Remove(oldUser.Email);
+            userdict.Add(newUser.Email,newUser);
             return newUser;
 
         }
@@ -79,7 +79,7 @@ namespace Tymeline.API.Tests
         }
 
         void MockRemoveUser(IUser user){
-            userdict.Remove(user.Mail);
+            userdict.Remove(user.Email);
         }
 
         IUser MockRegister(IUserCredentials user){

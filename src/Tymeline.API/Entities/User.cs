@@ -9,8 +9,8 @@ public class User : IUser
     }
     public User( string mail, string passwd ){
         passwordHasher = new PasswordHasher();
-        Mail = mail;
-        UserId =  Tymeline.API.HelperClass.ComputeSha256Hash(Mail).Substring(0,32); 
+        Email = mail;
+        UserId =  Tymeline.API.HelperClass.ComputeSha256Hash(Email).Substring(0,32); 
         // this cannot function as key in database, as this is reseeded every time the application starts
         // much better would be to get the key if a user is created from the DB
         passwordHash = passwd;
@@ -26,7 +26,7 @@ public class User : IUser
     private PasswordHasher passwordHasher {get;}
     public string UserId { get ; set; }
     private string passwordHash {get;}
-    public string Mail {get; set;}
+    public string Email {get; set;}
     public IUser verifyPassword(string passwd){
         var (verified, needsUpgrade) = passwordHasher.Check(passwordHash, passwd);
         if (verified){
@@ -37,7 +37,7 @@ public class User : IUser
 
     public IUser updatePassword(string password){
         var passwordHash = passwordHasher.Hash(password);
-        return new User( Mail, passwordHash);
+        return new User( Email, passwordHash);
 
     }
     

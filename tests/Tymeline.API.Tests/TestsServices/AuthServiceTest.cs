@@ -44,10 +44,10 @@ namespace Tymeline.API.Tests
         }
 
         IUser MockChangePassword(IUser user, string password){
-            IUser oldUser = userdict.GetValueOrDefault(user.Mail);
+            IUser oldUser = userdict.GetValueOrDefault(user.Email);
             var newUser = oldUser.updatePassword(password);
-            userdict.Remove(oldUser.Mail);
-            userdict.Add(newUser.Mail,newUser);
+            userdict.Remove(oldUser.Email);
+            userdict.Add(newUser.Email,newUser);
             return newUser;
 
         }
@@ -59,7 +59,7 @@ namespace Tymeline.API.Tests
         }
 
         void MockRemoveUser(IUser user){
-            userdict.Remove(user.Mail);
+            userdict.Remove(user.Email);
         }
 
         IUser MockRegister(IUserCredentials user){
@@ -99,7 +99,7 @@ namespace Tymeline.API.Tests
             for (int i = 2; i < 100; i++)
             {
                 User user = new User($"test{i}@email.de",passwordHasher.Hash("hunter12"));
-                users.Add(user.Mail,user);
+                users.Add(user.Email,user);
             }
             return users;
         }
@@ -110,7 +110,7 @@ namespace Tymeline.API.Tests
             IUserCredentials credentials = new UserCredentials(mail,"hunter12");
             IUser user = _authService.Login(credentials);
             Assert.NotNull(user);
-            Assert.AreEqual(user.Mail,mail);
+            Assert.AreEqual(user.Email,mail);
         }
         [Test]
         public void Test_Login_Given_Invalid_Credentials_Expect_ArgumentException(){
@@ -134,7 +134,7 @@ namespace Tymeline.API.Tests
             IUserCredentials credentials = new UserCredentials(mail,"hunter13");
             IUser user =_authService.Register(credentials);
             Assert.NotNull(user);
-            Assert.AreEqual(user.Mail,mail);
+            Assert.AreEqual(user.Email,mail);
         }
 
 
@@ -148,7 +148,7 @@ namespace Tymeline.API.Tests
             _authService.Register(credentials);
             IUser user =_authService.Login(creds);
             Assert.NotNull(user);
-            Assert.AreEqual(user.Mail,mail);
+            Assert.AreEqual(user.Email,mail);
         }
 
 
@@ -176,7 +176,7 @@ namespace Tymeline.API.Tests
             IUserCredentials creds = new UserCredentials(mail,passwd);
             var user = User.CredentialsToUser(creds);
             _authService.RemoveUser(user);
-            Assert.Throws<ArgumentException>(() => _authService.GetByMail(user.Mail));
+            Assert.Throws<ArgumentException>(() => _authService.GetByMail(user.Email));
         }
 
 
@@ -188,7 +188,7 @@ namespace Tymeline.API.Tests
             var user = User.CredentialsToUser(creds);
             _authService.RemoveUser(user);
             _authService.RemoveUser(user);
-           Assert.Throws<ArgumentException>(() => _authService.GetByMail(user.Mail));
+           Assert.Throws<ArgumentException>(() => _authService.GetByMail(user.Email));
         }
 
         [Test]
@@ -201,7 +201,7 @@ namespace Tymeline.API.Tests
             IUserCredentials creds = new UserCredentials(mail,"changedPassword");
              IUser loginUser =_authService.Login(creds);
             Assert.NotNull(loginUser);
-            Assert.AreEqual(loginUser.Mail,mail);
+            Assert.AreEqual(loginUser.Email,mail);
         }
 
 
@@ -218,7 +218,7 @@ namespace Tymeline.API.Tests
             IUserCredentials creds = new UserCredentials(mail,"changedPasswor2");
             IUser loginUser =_authService.Login(creds);
             Assert.NotNull(loginUser);
-            Assert.AreEqual(loginUser.Mail,mail);
+            Assert.AreEqual(loginUser.Email,mail);
         }
 
 
@@ -228,7 +228,7 @@ namespace Tymeline.API.Tests
             string passwd = "hunter13";
             IUserCredentials credentials = new UserCredentials(mail,passwd);
             IUser user = User.CredentialsToUser(credentials);
-            var jwtString = _jwtService.createJwt(user.Mail);
+            var jwtString = _jwtService.createJwt(user.Email);
             Assert.NotNull(jwtString);
         }
     }

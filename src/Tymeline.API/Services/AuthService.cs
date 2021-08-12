@@ -87,8 +87,8 @@ public class AuthService : IAuthService
         _dataRolesService.SetUserPermissions(userPermissions);
     }
 
-    public void AddUserPermission(string email, IPermission permission)
+    public void AddUserPermission(IUserPermission userPermission)
     {
-        _dataRolesService.AddUserPermission(email,permission);
+        _dataRolesService.AddUserPermission(userPermission.Email,userPermission.Permission);
     }
 }
