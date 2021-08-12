@@ -104,10 +104,10 @@ namespace Tymeline.API.Controllers
 
         [HttpGet]
         [Route("userInfo")]
-        public ActionResult<IUserPermissions> userInfo(){
+        public ActionResult<IUserRoles> userInfo(){
             
             // returns the permissions for the current user
-            return StatusCode(200,_authService.GetUserPermissions(User.Identity.Name));
+            return StatusCode(200,_authService.GetUserRoles(User.Identity.Name));
         }
 
 
@@ -117,7 +117,7 @@ namespace Tymeline.API.Controllers
         public ActionResult<string> SetPermissions([FromBody] HttpUserPermissions userPermissions){
             try
             {
-            _authService.SetUserPermissions(userPermissions.toIUserPermissions());
+            _authService.SetUserRoles(userPermissions.toIUserPermissions());
 
             constructJWTHeaders(User.Identity.Name);
             return StatusCode(200);
@@ -138,7 +138,7 @@ namespace Tymeline.API.Controllers
             try
             {
 
-            _authService.AddUserPermission(userPermission.ToIUserPermission());
+            _authService.AddUserRole(userPermission.ToIUserPermission());
             constructJWTHeaders(User.Identity.Name);
             return StatusCode(200);
                 
@@ -153,7 +153,7 @@ namespace Tymeline.API.Controllers
 
         [Authorize]
         [HttpPost]
-        [Route("addrole")]
+        [Route("removerole")]
         public ActionResult<string> RemoveRole( [FromBody] HttpUserPermission userPermission){
             try
             {
@@ -165,7 +165,6 @@ namespace Tymeline.API.Controllers
             }
             catch (System.Exception)
             {
-                
                 return StatusCode(500);
             }
         }
@@ -173,12 +172,12 @@ namespace Tymeline.API.Controllers
         [Authorize]
         [HttpGet]
         [Route("getroles/{email}")]
-        public ActionResult<IUserPermissions> GetRole(string email){
+        public ActionResult<IUserRoles> GetRole(string email){
             try
             {
             // returns the permissions for some user
             // TODO should only be allowed for certain roles!
-            return StatusCode(200,_authService.GetUserPermissions(email));
+            return StatusCode(200,_authService.GetUserRoles(email));
                 
             }
             catch (System.Exception)

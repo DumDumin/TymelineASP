@@ -52,11 +52,11 @@ namespace Tymeline.API.Tests
                     services.AddSingleton<UtilService>(s => _utilService);
                 });
             }).CreateClient();
-            _dataRolesService.Setup(s => s.GetUserPermissions(It.IsAny<string>())).Returns((string email)=> mockGetUserPermissions(email));
+            _dataRolesService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email)=> mockGetUserPermissions(email));
             _authService.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials cc) =>  MockRegister(cc));
             _authService.Setup(s => s.getUsers()).Returns(() =>  MockGetUsers());
             _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
-            _authService.Setup(s => s.GetUserPermissions(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
+            _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
         }
 
         [SetUp]
@@ -65,9 +65,9 @@ namespace Tymeline.API.Tests
            userdict = createUserDict();
         }
 
-        private IUserPermissions mockGetUserPermissions(string email){
-            var UserPermissions = new UserPermissions(email, new List<IPermission>());
-            UserPermissions.Permissions.Add(new Permission("test","value"));
+        private IUserRoles mockGetUserPermissions(string email){
+            var UserPermissions = new UserPermissions(email, new List<IRole>());
+            UserPermissions.Permissions.Add(new Role("test","value"));
             return UserPermissions;
         }
 

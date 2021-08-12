@@ -1,8 +1,8 @@
-public class Permission : IPermission
+public class Role : IRole
 {
 
-    public Permission(){}
-    public Permission(string type, string value){
+    public Role(){}
+    public Role(string type, string value){
         this.Type = type;
         this.Value = value;
     }
@@ -17,7 +17,7 @@ public class Permission : IPermission
             return false;
         }
         
-        return this.Type.Equals(((Permission)obj).Type)&&this.Value.Equals(((Permission)obj).Value);
+        return this.Type.Equals(((Role)obj).Type)&&this.Value.Equals(((Role)obj).Value);
     }
 
     public override int GetHashCode()

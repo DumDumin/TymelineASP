@@ -1,14 +1,14 @@
 public interface IFrontendRolesService{
 
-    IUserPermissions GetUserPermissions(string email);
+    IUserRoles GetUserPermissions(string email);
 
     void AddRole(string roleName);
 
     void RemoveRole(string roleName);
 
-    void SetUserPermissions(IUserPermissions permissions);
+    void SetUserPermissions(IUserRoles permissions);
 
-    void AddUserPermissions(string email, IPermission permission);
+    void AddUserPermissions(string email, IRole permission);
 
-    void RemoveUserPermissions(string email, IPermission permission);
+    void RemoveUserPermissions(string email, IRole permission);
 }

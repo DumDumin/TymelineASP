@@ -17,12 +17,12 @@ public class DataRolesService : IDataRolesService
         throw new System.NotImplementedException();
     }
 
-    public void AddUserPermission(string email, IPermission permission)
+    public void AddUserRole(string email, IRole permission)
     {
         throw new System.NotImplementedException();
     }
 
-    public IUserPermissions GetUserPermissions(string email)
+    public IUserRoles GetUserRoles(string email)
     {
         throw new System.NotImplementedException();
     }
@@ -42,12 +42,12 @@ public class DataRolesService : IDataRolesService
         throw new System.NotImplementedException();
     }
 
-    public void RemoveUserPermissions(string email, string key)
+    public void RemoveUserRole(string email, IRole role)
     {
         throw new System.NotImplementedException();
     }
 
-    public void SetUserPermissions(IUserPermissions permissions)
+    public void SetUserRoles(IUserRoles permissions)
     {
         throw new System.NotImplementedException();
     }

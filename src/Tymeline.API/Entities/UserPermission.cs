@@ -1,14 +1,14 @@
 
 
-public class UserPermission: IUserPermission{
+public class UserPermission: IUserRole{
 
-    public UserPermission(string mail, IPermission perm){
+    public UserPermission(string mail, IRole perm){
         Email = mail;
-        Permission = perm;
+        Roles = perm;
     }
     public string Email{get;set;}
 
-    public IPermission Permission{get;set;}
+    public IRole Roles{get;set;}
 
 }
 
@@ -16,16 +16,16 @@ public class UserPermission: IUserPermission{
 
 public class HttpUserPermission{
 
-    public HttpUserPermission(string email, Permission permission){
+    public HttpUserPermission(string email, Role permission){
         this.Email = email;
         this.Permission = permission;
     }
 
 
-    public IUserPermission ToIUserPermission(){
+    public IUserRole ToIUserPermission(){
         var s = new UserPermission(this.Email, this.Permission);
         return s;
     }
     public string Email{get;set;}
-    public Permission Permission{get;set;} 
+    public Role Permission{get;set;} 
 }

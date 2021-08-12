@@ -7,12 +7,12 @@ public interface IDataRolesService
     // users can be assigned to more than one role
     // roles can be assigned to more than one user
     // these roles just deal with 
-    IUserPermissions GetUserPermissions(string email);
-    void SetUserPermissions(IUserPermissions permissions);
+    IUserRoles GetUserRoles(string email);
+    void SetUserRoles(IUserRoles roles);
     void AddRole(string roleName);
     void RemoveRole(string roleName);
-    void AddUserPermission(string email, IPermission permission);
-    void RemoveUserPermissions(string email, string key);
+    void AddUserRole(string email, IRole role);
+    void RemoveUserRole(string email, IRole key);
     // add methods for mapping roles to items
 
     void addRoleToItem(string role, TymelineObject to);

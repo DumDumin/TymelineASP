@@ -9,7 +9,7 @@ public class ListIPermissionsConverter : JsonConverter
     public override bool CanRead => true;
     public override bool CanConvert(Type objectType)
     {
-        return objectType == typeof(List<IPermission>);
+        return objectType == typeof(List<IRole>);
     }
     public override void WriteJson(JsonWriter writer,
         object value, JsonSerializer serializer)
@@ -17,12 +17,12 @@ public class ListIPermissionsConverter : JsonConverter
         throw new InvalidOperationException("Use default serialization.");
     }
 
-    public override List<IPermission> ReadJson(JsonReader reader,
+    public override List<IRole> ReadJson(JsonReader reader,
         Type objectType, object existingValue,
         JsonSerializer serializer)
     {
         var jsonArray = JArray.Load(reader);
-        var permissionList = new List<IPermission>();
+        var permissionList = new List<IRole>();
         foreach (var item in jsonArray)
             {
 
@@ -30,7 +30,7 @@ public class ListIPermissionsConverter : JsonConverter
                 var jsonObject = item as JObject;
                 var key = jsonObject["type"].Value<string>();
                 var value = jsonObject["value"].Value<string>();
-                var instance = new Permission(key,value);
+                var instance = new Role(key,value);
 
 
                 // Populate the form field instance.
@@ -49,7 +49,7 @@ public class IPermissionConverter : JsonConverter
     public override bool CanRead => true;
     public override bool CanConvert(Type objectType)
     {
-        return objectType == typeof(IPermission);
+        return objectType == typeof(IRole);
     }
     public override void WriteJson(JsonWriter writer,
         object value, JsonSerializer serializer)
@@ -57,13 +57,13 @@ public class IPermissionConverter : JsonConverter
         throw new InvalidOperationException("Use default serialization.");
     }
 
-    public override IPermission ReadJson(JsonReader reader,
+    public override IRole ReadJson(JsonReader reader,
         Type objectType, object existingValue,
         JsonSerializer serializer)
     {
 
         JObject jsonObject = JObject.Load(reader);
-        var perm = new Permission(jsonObject["type"].Value<string>(),jsonObject["value"].Value<string>());
+        var perm = new Role(jsonObject["type"].Value<string>(),jsonObject["value"].Value<string>());
         // serializer.Populate(jsonObject.CreateReader(),perm);
         return perm;
 

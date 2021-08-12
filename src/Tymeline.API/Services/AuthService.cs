@@ -77,18 +77,23 @@ public class AuthService : IAuthService
        return AuthDao.ChangePassword(user,passwd);
     }
 
-    public IUserPermissions GetUserPermissions(string email)
+    public IUserRoles GetUserRoles(string email)
     {
-        return _dataRolesService.GetUserPermissions(email);
+        return _dataRolesService.GetUserRoles(email);
     }
 
-    public void SetUserPermissions(IUserPermissions userPermissions)
+    public void SetUserRoles(IUserRoles userRole)
     {
-        _dataRolesService.SetUserPermissions(userPermissions);
+        _dataRolesService.SetUserRoles(userRole);
     }
 
-    public void AddUserPermission(IUserPermission userPermission)
+    public void AddUserRole(IUserRole userRole)
     {
-        _dataRolesService.AddUserPermission(userPermission.Email,userPermission.Permission);
+        _dataRolesService.AddUserRole(userRole.Email,userRole.Roles);
+    }
+
+    public void RemoveUserRole(IUserRole userRole){
+        _dataRolesService.RemoveUserRole(userRole.Email,userRole.Roles);
+
     }
 }

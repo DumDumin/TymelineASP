@@ -13,13 +13,13 @@ public interface IAuthService
     IUser ChangePassword(IUser user, string passwd);
     IUser GetByMail(string mail);
 
-    IUserPermissions GetUserPermissions(string email);
+    IUserRoles GetUserRoles(string email);
 
-    void SetUserPermissions(IUserPermissions userPermissions);
+    void SetUserRoles(IUserRoles userPermissions);
 
-    void AddUserPermission(IUserPermission userPermission);
+    void AddUserRole(IUserRole userPermission);
 
-    void RemoveUserRole(IUserPermission userRole);
+    void RemoveUserRole(IUserRole userRole);
     
 
 }

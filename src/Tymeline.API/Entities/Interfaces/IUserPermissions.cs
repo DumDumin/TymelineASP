@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 
-public interface IUserPermissions{
+public interface IUserRoles{
     string Email { get; set;}
-    List<IPermission> Permissions {get; set;}
+    List<IRole> Permissions {get; set;}
 }

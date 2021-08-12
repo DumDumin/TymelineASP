@@ -1,4 +1,4 @@
-public interface IUserPermission{
+public interface IUserRole{
     string Email{get;set;}
-    IPermission Permission{get;set;}
+    IRole Roles{get;set;}
 }

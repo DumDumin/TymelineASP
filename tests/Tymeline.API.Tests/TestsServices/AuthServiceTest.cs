@@ -28,7 +28,7 @@ namespace Tymeline.API.Tests
             _rolesService = new Mock<IDataRolesService>();
             _authService = new AuthService(_authDao.Object, _utilService,_rolesService.Object, _appSettingsOptions);
             _jwtService = new JwtService(_rolesService.Object,_appSettingsOptions);
-            _rolesService.Setup(s => s.GetUserPermissions(It.IsAny<string>())).Returns((string email)=> mockGetUserPermissions(email));
+            _rolesService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email)=> mockGetUserPermissions(email));
             _authDao.Setup(s => s.getUserByMail(It.IsAny<string>())).Returns((string mail) => MockGetUserByMail(mail));
             _authDao.Setup(s => s.GetUsers()).Returns(() => MockGetUser());
             _authDao.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials user) => MockRegister(user));
@@ -52,9 +52,9 @@ namespace Tymeline.API.Tests
 
         }
 
-         private IUserPermissions mockGetUserPermissions(string email){
-            var UserPermissions = new UserPermissions(email, new List<IPermission>());
-            UserPermissions.Permissions.Add(new Permission("test","value"));
+         private IUserRoles mockGetUserPermissions(string email){
+            var UserPermissions = new UserPermissions(email, new List<IRole>());
+            UserPermissions.Permissions.Add(new Role("test","value"));
             return UserPermissions;
         }
 

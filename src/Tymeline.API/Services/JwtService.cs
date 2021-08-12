@@ -26,7 +26,7 @@ public class JwtService : IJwtService
 
     public string createJwt(string userMail)
     {
-        var userRoles = _rolesService.GetUserPermissions(userMail);
+        var userRoles = _rolesService.GetUserRoles(userMail);
 
 
         var utcNow = DateTime.UtcNow; 
