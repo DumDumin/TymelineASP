@@ -22,6 +22,11 @@ public class DataRolesService : IDataRolesService
         throw new System.NotImplementedException();
     }
 
+    public void AddUserRole(IUserRole userRole)
+    {
+        throw new System.NotImplementedException();
+    }
+
     public IUserRoles GetUserRoles(string email)
     {
         throw new System.NotImplementedException();
@@ -43,6 +48,11 @@ public class DataRolesService : IDataRolesService
     }
 
     public void RemoveUserRole(string email, IRole role)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void RemoveUserRole(IUserRole userRole)
     {
         throw new System.NotImplementedException();
     }

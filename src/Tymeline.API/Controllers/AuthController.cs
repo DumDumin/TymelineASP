@@ -29,18 +29,6 @@ namespace Tymeline.API.Controllers
             _JwtService = jwtService;
         }
 
-        private void constructJWTHeaders(string mail)
-        {
-            // TODO DOMAIN NEEDS TO BE SET BY ENV VARIABLE, just like path in launch setting
-            CookieOptions opt = new CookieOptions();
-            opt.Domain = "localhost";
-            opt.HttpOnly = true;
-            opt.Secure = true;
-            opt.SameSite = SameSiteMode.Strict;
-            opt.MaxAge = TimeSpan.FromHours(12);
-            Response.Cookies.Append("jwt", _JwtService.createJwt(mail), opt);
-        }
-
 
         [HttpPost]
         [Route("register")]
@@ -79,7 +67,8 @@ namespace Tymeline.API.Controllers
             try
             {
                 IUser user = _authService.Login(credentials);
-                constructJWTHeaders(user.Email);
+                _JwtService.constructJWTHeaders(Response,user.Email);
+                
                 return StatusCode(200, user);
             }
              catch (ArgumentException)
@@ -102,89 +91,13 @@ namespace Tymeline.API.Controllers
             return StatusCode(200,User.Claims.ToString());
         }
 
-        [HttpGet]
-        [Route("userInfo")]
-        public ActionResult<IUserRoles> userInfo(){
-            
-            // returns the permissions for the current user
-            return StatusCode(200,_authService.GetUserRoles(User.Identity.Name));
-        }
 
 
-        [Authorize]
-        [HttpPost]
-        [Route("setroles")]
-        public ActionResult<string> SetPermissions([FromBody] HttpUserPermissions userPermissions){
-            try
-            {
-            _authService.SetUserRoles(userPermissions.toIUserRoles());
 
-            constructJWTHeaders(User.Identity.Name);
-            return StatusCode(200);
-                
-            }
-            catch (System.Exception)
-            {
-                
-                return StatusCode(500);
-            }
-        }
+
 
         
-        [Authorize]
-        [HttpPost]
-        [Route("addrole")]
-        public ActionResult<string> AddRole( [FromBody] HttpUserPermission userPermission){
-            try
-            {
 
-            _authService.AddUserRole(userPermission.ToIUserRole());
-            constructJWTHeaders(User.Identity.Name);
-            return StatusCode(200);
-                
-            }
-            catch (System.Exception)
-            {
-                
-                return StatusCode(500);
-            }
-        }
-
-
-        [Authorize]
-        [HttpPost]
-        [Route("removerole")]
-        public ActionResult<string> RemoveRole( [FromBody] HttpUserPermission userPermission){
-            try
-            {
-
-            _authService.RemoveUserRole(userPermission.ToIUserRole());
-            constructJWTHeaders(User.Identity.Name);
-            return StatusCode(200);
-                
-            }
-            catch (System.Exception)
-            {
-                return StatusCode(500);
-            }
-        }
-
-        [Authorize]
-        [HttpGet]
-        [Route("getroles/{email}")]
-        public ActionResult<IUserRoles> GetRole(string email){
-            try
-            {
-            // returns the permissions for some user
-            // TODO should only be allowed for certain roles!
-            return StatusCode(200,_authService.GetUserRoles(email));
-                
-            }
-            catch (System.Exception)
-            {
-                
-                return StatusCode(500);
-            }
-        }
+        
     }
 }

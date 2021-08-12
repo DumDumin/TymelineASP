@@ -62,19 +62,18 @@ namespace Tymeline.API.Tests
                     services.AddSingleton<IJwtService>(s => _jwtService);
                     services.AddSingleton<IAuthService>(s => _authService.Object);
                     services.AddSingleton<UtilService>(s => _utilService);
+                    services.AddSingleton<IDataRolesService>(s => _rolesService.Object);
                 });
             }).CreateClient();
             
             _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
-            _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => _rolesService.Object.GetUserRoles(email));
-            _authService.Setup(s => s.SetUserRoles(It.IsAny<IUserRoles>())).Callback((IUserRoles permissions) => _rolesService.Object.SetUserRoles(permissions));
-            _authService.Setup(s => s.AddUserRole(It.IsAny<IUserRole>())).Callback((IUserRole userPermission) => _rolesService.Object.AddUserRole(userPermission.Email,userPermission.Roles));
-            _authService.Setup(s => s.RemoveUserRole(It.IsAny<IUserRole>())).Callback((IUserRole userRole)=> _rolesService.Object.RemoveUserRole(userRole.Email,userRole.Roles));
 
             _rolesService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
             _rolesService.Setup(s => s.SetUserRoles(It.IsAny<IUserRoles>())).Callback((IUserRoles permissions) => mockSetRoles(permissions));
             _rolesService.Setup(s => s.AddUserRole(It.IsAny<string>(),It.IsAny<IRole>())).Callback((string email, IRole permission) => MockAddRoles(email,permission));
+            _rolesService.Setup(s => s.AddUserRole(It.IsAny<IUserRole>())).Callback((IUserRole userRole) => MockAddRoles(userRole.Email,userRole.Roles));
             _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<string>(),It.IsAny<IRole>())).Callback((string Email, IRole role)=> MockRemoveUserRole(Email,role));
+            _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<IUserRole>())).Callback((IUserRole userRole)=> MockRemoveUserRole(userRole.Email,userRole.Roles));
         
             _authService.Setup(s => s.getUsers()).Returns(() =>  MockGetUsers());
         }
@@ -211,12 +210,12 @@ namespace Tymeline.API.Tests
             userPermissions.Email = loginData.Email;
             JsonContent jsonList = JsonContent.Create(userPermissions);
 
-            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setroles");
+            Uri uriSetPermissions = new Uri("https://localhost:5001/roles/setroles");
             var setPermissions = await _client.PostAsync(uriSetPermissions, jsonList);
             var responseObjectsetPermissions = await setPermissions.Content.ReadAsStringAsync();
             Assert.AreEqual(HttpStatusCode.OK, setPermissions.StatusCode);
 
-            Uri uriTest = new Uri("https://localhost:5001/auth/userInfo");
+            Uri uriTest = new Uri("https://localhost:5001/roles/userInfo");
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var parsedObject = JsonConvert.DeserializeObject<UserPermissions>(responseObject);
@@ -233,7 +232,7 @@ namespace Tymeline.API.Tests
             
             //given
             HttpUserPermissions expectedPermission = new HttpUserPermissions(creds.Email,testList);
-            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setroles");
+            Uri uriSetPermissions = new Uri("https://localhost:5001/roles/setroles");
             var setPermissions = await _client.PostAsync(uriSetPermissions, JsonContent.Create(expectedPermission));
             var responseObjectsetPermissions = await setPermissions.Content.ReadAsStringAsync();
             Assert.AreEqual(HttpStatusCode.OK, setPermissions.StatusCode);
@@ -254,7 +253,7 @@ namespace Tymeline.API.Tests
             
             //given
             HttpUserPermissions expectedPermission = new HttpUserPermissions(creds.Email,testList);
-            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setroles");
+            Uri uriSetPermissions = new Uri("https://localhost:5001/roles/setroles");
             var setPermissions = await _client.PostAsync(uriSetPermissions, JsonContent.Create(expectedPermission));
             var responseObjectsetPermissions = await setPermissions.Content.ReadAsStringAsync();
             Assert.AreEqual(HttpStatusCode.OK, setPermissions.StatusCode);
@@ -271,7 +270,7 @@ namespace Tymeline.API.Tests
             
             //given
             HttpUserPermission expectedPermission = new HttpUserPermission(creds.Email,ep);
-            Uri uriAddPermission = new Uri("https://localhost:5001/auth/addrole");
+            Uri uriAddPermission = new Uri("https://localhost:5001/roles/addrole");
             var setPermissions = await _client.PostAsync(uriAddPermission,JsonContent.Create(expectedPermission));
             var responseObject = await setPermissions.Content.ReadAsStringAsync();
             IEnumerable<string> cookies = setPermissions.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
@@ -292,11 +291,11 @@ namespace Tymeline.API.Tests
             User user = await GetRandomUser();
 
             HttpUserPermission expectedPermission = new HttpUserPermission(user.Email,ep);
-            Uri uriAddPermission = new Uri("https://localhost:5001/auth/addrole");
+            Uri uriAddPermission = new Uri("https://localhost:5001/roles/addrole");
             var setPermissions = await _client.PostAsync(uriAddPermission,JsonContent.Create(expectedPermission));
 
 
-            var roleResponse = await _client.GetAsync($"https://localhost:5001/auth/getroles/{user.Email}");
+            var roleResponse = await _client.GetAsync($"https://localhost:5001/roles/getroles/{user.Email}");
 
             var s = await roleResponse.Content.ReadAsStringAsync();
             var roleResponseObject = JsonConvert.DeserializeObject<UserPermissions>(s);
@@ -312,7 +311,7 @@ namespace Tymeline.API.Tests
         [Test, AutoData]
         public async Task Test_Get_Roles_Set(List<Role> testList)
         {
-            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setroles");
+            Uri uriSetPermissions = new Uri("https://localhost:5001/roles/setroles");
             //setup
             UserCredentials creds = await Login();
 
@@ -322,7 +321,7 @@ namespace Tymeline.API.Tests
 
             HttpUserPermissions expectedPermission = new HttpUserPermissions(user.Email, testList); //create new HttpUserPermission
             var setPermissions = await _client.PostAsync(uriSetPermissions, JsonContent.Create(expectedPermission));
-            var roleResponse = await _client.GetAsync($"https://localhost:5001/auth/getroles/{user.Email}");
+            var roleResponse = await _client.GetAsync($"https://localhost:5001/roles/getroles/{user.Email}");
 
             var s = await roleResponse.Content.ReadAsStringAsync();
             var roleResponseObject = JsonConvert.DeserializeObject<UserPermissions>(s);
@@ -340,18 +339,18 @@ namespace Tymeline.API.Tests
             User user = await GetRandomUser();
             HttpUserPermission expectedPermission = new HttpUserPermission(user.Email,ep);
             HttpUserPermission expectedPermission_keep = new HttpUserPermission(user.Email,ep_keep);
-            Uri uriAddPermission = new Uri("https://localhost:5001/auth/addrole");
+            Uri uriAddPermission = new Uri("https://localhost:5001/roles/addrole");
 
             //given
 
             await _client.PostAsync(uriAddPermission, JsonContent.Create(expectedPermission));
             await _client.PostAsync(uriAddPermission, JsonContent.Create(expectedPermission_keep));
-            Uri uriRemovePermission = new Uri("https://localhost:5001/auth/removerole");
+            Uri uriRemovePermission = new Uri("https://localhost:5001/roles/removerole");
             await _client.PostAsync(uriRemovePermission,JsonContent.Create(expectedPermission));
 
             //assert
 
-            var roleResponse = await _client.GetAsync($"https://localhost:5001/auth/getroles/{user.Email}");
+            var roleResponse = await _client.GetAsync($"https://localhost:5001/roles/getroles/{user.Email}");
 
             var s = await roleResponse.Content.ReadAsStringAsync();
             var roleResponseObject = JsonConvert.DeserializeObject<UserPermissions>(s);

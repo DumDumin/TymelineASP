@@ -56,7 +56,7 @@ namespace Tymeline.API.Tests
             _authService.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials cc) =>  MockRegister(cc));
             _authService.Setup(s => s.getUsers()).Returns(() =>  MockGetUsers());
             _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
-            _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
+            
         }
 
         [SetUp]
@@ -279,7 +279,7 @@ namespace Tymeline.API.Tests
         [Test]
         public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_Authentication_expect_Claims(){
             await Login();
-            Uri uriTest = new Uri("https://localhost:5001/auth/userInfo");
+            Uri uriTest = new Uri("https://localhost:5001/roles/userInfo");
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var statusCode = responseTest.StatusCode;
@@ -292,7 +292,7 @@ namespace Tymeline.API.Tests
         public async Task Test_UserInfo_with_registeredAccount_Return_Permissions_for_User(){
             
             await Login();
-            Uri uriTest = new Uri("https://localhost:5001/auth/userInfo");
+            Uri uriTest = new Uri("https://localhost:5001/roles/userInfo");
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var parsedObject = JsonConvert.DeserializeObject<UserPermissions>(responseObject);

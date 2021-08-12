@@ -11,8 +11,10 @@ public interface IDataRolesService
     void SetUserRoles(IUserRoles roles);
     void AddRole(string roleName);
     void RemoveRole(string roleName);
+    void AddUserRole(IUserRole userRole);
     void AddUserRole(string email, IRole role);
     void RemoveUserRole(string email, IRole key);
+    void RemoveUserRole(IUserRole userRole);
     // add methods for mapping roles to items
 
     void addRoleToItem(string role, TymelineObject to);

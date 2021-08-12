@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -23,7 +24,19 @@ public class JwtService : IJwtService
         _rolesService = rolesService;
     }
     
-
+    
+    public HttpResponse constructJWTHeaders(HttpResponse Response, string mail)
+        {
+            // TODO DOMAIN NEEDS TO BE SET BY ENV VARIABLE, just like path in launch setting
+            CookieOptions opt = new CookieOptions();
+            opt.Domain = "localhost";
+            opt.HttpOnly = true;
+            opt.Secure = true;
+            opt.SameSite = SameSiteMode.Strict;
+            opt.MaxAge = TimeSpan.FromHours(12);
+            Response.Cookies.Append("jwt", createJwt(mail), opt);
+            return Response;
+        }
     public string createJwt(string userMail)
     {
         List<IRole> userRoles = _rolesService.GetUserRoles(userMail).Permissions.Where(permission => permission.Type.Equals("Frontend")).ToList();

@@ -13,13 +13,4 @@ public interface IAuthService
     IUser ChangePassword(IUser user, string passwd);
     IUser GetByMail(string mail);
 
-    IUserRoles GetUserRoles(string email);
-
-    void SetUserRoles(IUserRoles userPermissions);
-
-    void AddUserRole(IUserRole userPermission);
-
-    void RemoveUserRole(IUserRole userRole);
-    
-
 }
