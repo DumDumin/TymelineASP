@@ -19,8 +19,7 @@ using System.Security.Claims;
 using AutoFixture.NUnit3;
 using System.IdentityModel.Tokens.Jwt;
 using FluentAssertions;
-using AutoFixture.Kernel;
-using AutoFixture;
+
 
 namespace Tymeline.API.Tests
 {
@@ -47,9 +46,6 @@ namespace Tymeline.API.Tests
             // var fixture = new AutoFixture.Fixture();
             // fixture.Customizations.Add(new TypeRelay(typeof(IPermission),typeof(Permission)));
 
-
-
-
             _appSettingsOptions = Options.Create<AppSettings>(new AppSettings());
             _appSettings = _appSettingsOptions.Value;
             _factory = new WebApplicationFactory<Startup>();
@@ -73,17 +69,16 @@ namespace Tymeline.API.Tests
             _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => _rolesService.Object.GetUserRoles(email));
             _authService.Setup(s => s.SetUserRoles(It.IsAny<IUserRoles>())).Callback((IUserRoles permissions) => _rolesService.Object.SetUserRoles(permissions));
             _authService.Setup(s => s.AddUserRole(It.IsAny<IUserRole>())).Callback((IUserRole userPermission) => _rolesService.Object.AddUserRole(userPermission.Email,userPermission.Roles));
-            
+            _authService.Setup(s => s.RemoveUserRole(It.IsAny<IUserRole>())).Callback((IUserRole userRole)=> _rolesService.Object.RemoveUserRole(userRole.Email,userRole.Roles));
+
             _rolesService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
             _rolesService.Setup(s => s.SetUserRoles(It.IsAny<IUserRoles>())).Callback((IUserRoles permissions) => mockSetRoles(permissions));
             _rolesService.Setup(s => s.AddUserRole(It.IsAny<string>(),It.IsAny<IRole>())).Callback((string email, IRole permission) => MockAddRoles(email,permission));
-        
+            _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<string>(),It.IsAny<IRole>())).Callback((string Email, IRole role)=> MockRemoveUserRole(Email,role));
         
             _authService.Setup(s => s.getUsers()).Returns(() =>  MockGetUsers());
         }
 
-
-      
 
         [SetUp]
         public void Setup()
@@ -97,7 +92,10 @@ namespace Tymeline.API.Tests
             _client.DefaultRequestHeaders.Clear();
         }
 
-
+        private void MockRemoveUserRole(string Email, IRole Role){
+            roles.TryGetValue(Email,out var userRoles);
+            userRoles.Remove(Role);
+        }
 
         private List<IUser> MockGetUsers()
         {
@@ -230,6 +228,7 @@ namespace Tymeline.API.Tests
         {
 
             //setup
+            testList[0].Type = "Frontend";
             UserCredentials creds = await Login();
             
             //given
@@ -243,10 +242,32 @@ namespace Tymeline.API.Tests
             parsedJwt.Claims.ToList().Select(claim => new Role(claim.Type, claim.Value)).ToList().Should().Contain(testList[0]);
         }
 
+
+
+         [Test,AutoData]
+        public async Task Test_UserInfo_with_registeredAccount_Set_Roles_Return_New_Role_inJWT(List<Role> testList)
+        {
+
+            //setup
+            testList.ForEach(role => role.Type = "Frontend");
+            UserCredentials creds = await Login();
+            
+            //given
+            HttpUserPermissions expectedPermission = new HttpUserPermissions(creds.Email,testList);
+            Uri uriSetPermissions = new Uri("https://localhost:5001/auth/setroles");
+            var setPermissions = await _client.PostAsync(uriSetPermissions, JsonContent.Create(expectedPermission));
+            var responseObjectsetPermissions = await setPermissions.Content.ReadAsStringAsync();
+            Assert.AreEqual(HttpStatusCode.OK, setPermissions.StatusCode);
+            IEnumerable<string> c = setPermissions.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
+            JwtSecurityToken parsedJwt = ExtractTokenFromCookies(c);
+            parsedJwt.Claims.ToList().Select(claim => new Role(claim.Type, claim.Value)).ToList().Should().Contain(testList);
+        }
+
         [Test, AutoData]
         public async Task Test_Add_Role_With_Valid_Role(Role ep){
             //setup
             UserCredentials creds = await Login();
+            ep.Type = "Frontend";
             
             //given
             HttpUserPermission expectedPermission = new HttpUserPermission(creds.Email,ep);
@@ -312,8 +333,6 @@ namespace Tymeline.API.Tests
 
         }
 
-
-
         [Test, AutoData]
         public async Task Test_Remove_Role_With_Valid_Role(Role ep, Role ep_keep){
             // setup
@@ -330,7 +349,6 @@ namespace Tymeline.API.Tests
             Uri uriRemovePermission = new Uri("https://localhost:5001/auth/removerole");
             await _client.PostAsync(uriRemovePermission,JsonContent.Create(expectedPermission));
 
-           
             //assert
 
             var roleResponse = await _client.GetAsync($"https://localhost:5001/auth/getroles/{user.Email}");

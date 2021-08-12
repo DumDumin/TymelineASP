@@ -26,7 +26,7 @@ public class JwtService : IJwtService
 
     public string createJwt(string userMail)
     {
-        var userRoles = _rolesService.GetUserRoles(userMail);
+        List<IRole> userRoles = _rolesService.GetUserRoles(userMail).Permissions.Where(permission => permission.Type.Equals("Frontend")).ToList();
 
 
         var utcNow = DateTime.UtcNow; 
@@ -48,7 +48,7 @@ public class JwtService : IJwtService
             };
 
         var claimlist = new List<Claim>();
-        userRoles.Permissions.ForEach(permission => claimlist.Add(new Claim(permission.Type,permission.Value)));
+        userRoles.ForEach(permission => claimlist.Add(new Claim(permission.Type,permission.Value)));
         claimlist.Add(new Claim(ClaimTypes.Name, userMail));
         claimlist.Add(new Claim(ClaimTypes.Role, "admin"));
         tokenDescriptor.Subject.AddClaims(claimlist);

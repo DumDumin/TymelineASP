@@ -22,7 +22,7 @@ public class HttpUserPermission{
     }
 
 
-    public IUserRole ToIUserPermission(){
+    public IUserRole ToIUserRole(){
         var s = new UserPermission(this.Email, this.Permission);
         return s;
     }

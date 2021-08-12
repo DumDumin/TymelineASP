@@ -27,7 +27,7 @@ public class HttpUserPermissions{
         this.Permissions = permissions;
     }
 
-    public IUserRoles toIUserPermissions(){
+    public IUserRoles toIUserRoles(){
         
         var iPermissionList = new List<IRole>();
         Permissions.ForEach(item => iPermissionList.Add(item));

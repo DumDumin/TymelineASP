@@ -117,7 +117,7 @@ namespace Tymeline.API.Controllers
         public ActionResult<string> SetPermissions([FromBody] HttpUserPermissions userPermissions){
             try
             {
-            _authService.SetUserRoles(userPermissions.toIUserPermissions());
+            _authService.SetUserRoles(userPermissions.toIUserRoles());
 
             constructJWTHeaders(User.Identity.Name);
             return StatusCode(200);
@@ -138,7 +138,7 @@ namespace Tymeline.API.Controllers
             try
             {
 
-            _authService.AddUserRole(userPermission.ToIUserPermission());
+            _authService.AddUserRole(userPermission.ToIUserRole());
             constructJWTHeaders(User.Identity.Name);
             return StatusCode(200);
                 
@@ -158,7 +158,7 @@ namespace Tymeline.API.Controllers
             try
             {
 
-            _authService.RemoveUserRole(userPermission.ToIUserPermission());
+            _authService.RemoveUserRole(userPermission.ToIUserRole());
             constructJWTHeaders(User.Identity.Name);
             return StatusCode(200);
                 
