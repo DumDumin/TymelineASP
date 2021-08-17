@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-public class UserPermissions : IUserRoles
+public class UserRoles : IUserRoles
 {
 
-    public UserPermissions(){
+    public UserRoles(){
 
     }
-    public UserPermissions(string email,List<IRole> permissions){
+    public UserRoles(string email,List<IRole> permissions){
         this.Email = email;
         this.Permissions = permissions;
     }
@@ -16,25 +16,4 @@ public class UserPermissions : IUserRoles
 
     [JsonConverter(typeof(ListIPermissionsConverter))]
     public List<IRole> Permissions { get; set; }
-}
-
-public class HttpUserPermissions{
-
-
-    public HttpUserPermissions(string email, List<Role> permissions)
-    {
-        this.Email = email;
-        this.Permissions = permissions;
-    }
-
-    public IUserRoles toIUserRoles(){
-        
-        var iPermissionList = new List<IRole>();
-        Permissions.ForEach(item => iPermissionList.Add(item));
-        return new UserPermissions(Email, iPermissionList);
-
-    } 
-
-    public string Email{get;set;}
-    public List<Role> Permissions { get; set; }
 }

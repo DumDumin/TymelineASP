@@ -113,5 +113,21 @@ namespace Tymeline.API.Controllers
             return StatusCode(200,_dataRolesService.GetUserRoles(User.Identity.Name));
         }
 
+
+        [HttpPost]
+        [Route("additemrole")]
+        public ActionResult<HttpTymelineObjectRoles> ItemRoleAdd( [FromBody] HttpTymelineObjectRolesIncrement roleIncrement ){
+            List<IRole> newRoles = _dataRolesService.AddRoleToItem(roleIncrement.Role,roleIncrement.tymelineObject);
+            return StatusCode(200,new HttpTymelineObjectRoles{Roles=newRoles.ConvertAll(o => (Role)o),tymelineObject=roleIncrement.tymelineObject});
+        }
+
+
+        [HttpPost]
+        [Route("removeitemrole")]
+        public ActionResult<HttpTymelineObjectRoles> ItemRoleRemove( [FromBody] HttpTymelineObjectRolesIncrement roleIncrement ){
+            List<IRole> newRoles = _dataRolesService.RemoveRoleFromItem(roleIncrement.Role,roleIncrement.tymelineObject);
+            return StatusCode(200,new HttpTymelineObjectRoles{Roles=newRoles.ConvertAll(o => (Role)o),tymelineObject=roleIncrement.tymelineObject});
+        }
+
     }
 }

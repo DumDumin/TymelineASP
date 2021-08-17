@@ -7,12 +7,22 @@ public class DataRolesService : IDataRolesService
         throw new System.NotImplementedException();
     }
 
-    public void addRoleToItem(string role, TymelineObject to)
+    public void AddRoleToItem(string role, TymelineObject to)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public List<IRole> AddRoleToItem(IRole role, TymelineObject to)
     {
         throw new System.NotImplementedException();
     }
 
     public void AddRoleToItems(string role, IEnumerable<TymelineObject> tos)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void AddRoleToItems(IRole role, IEnumerable<TymelineObject> tos)
     {
         throw new System.NotImplementedException();
     }
@@ -23,6 +33,11 @@ public class DataRolesService : IDataRolesService
     }
 
     public void AddUserRole(IUserRole userRole)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void getItemRoles(TymelineObject to)
     {
         throw new System.NotImplementedException();
     }
@@ -42,7 +57,17 @@ public class DataRolesService : IDataRolesService
         throw new System.NotImplementedException();
     }
 
+    public List<IRole> RemoveRoleFromItem(IRole role, TymelineObject to)
+    {
+        throw new System.NotImplementedException();
+    }
+
     public void RemoveRoleFromItems(string role, IEnumerable<TymelineObject> tos)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void RemoveRoleFromItems(IRole role, IEnumerable<TymelineObject> tos)
     {
         throw new System.NotImplementedException();
     }

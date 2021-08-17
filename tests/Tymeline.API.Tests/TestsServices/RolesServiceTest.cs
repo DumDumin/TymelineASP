@@ -73,7 +73,7 @@ namespace Tymeline.API.Tests
         }
 
          private IUserRoles mockGetUserPermissions(string email){
-            var UserPermissions = new UserPermissions(email, new List<IRole>());
+            var UserPermissions = new UserRoles(email, new List<IRole>());
             UserPermissions.Permissions.Add(new Role("test","value"));
             return UserPermissions;
         }

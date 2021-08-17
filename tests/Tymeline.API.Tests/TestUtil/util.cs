@@ -21,6 +21,12 @@ public class TestUtil{
     public static int RandomInt(){
         return random.Next();
     }
+
+        public static int RandomIntWithMax(int maxValue){
+        return random.Next(maxValue);
+    }
+
+
  
     static public List<TymelineObject> setupTymelineList(){
 
@@ -46,4 +52,12 @@ public class TestUtil{
             }
             return array;
         }
+
+
+
+    public static Dictionary<string,List<IRole>> setupRoles(List<TymelineObject> tymelineObjects){
+        var returnDict = new Dictionary<string,List<IRole>>();
+        tymelineObjects.ForEach(o => returnDict.Add(o.Id,new List<IRole>()));
+        return returnDict;
+    }
 }
