@@ -5,9 +5,12 @@ public class Role : IRole
     public Role(string type, string value){
         this.Type = type;
         this.Value = value;
+        this.RoleId = this.GetHashCode();
     }
     public string Type { get ; set ; }
     public string Value { get ; set ; }
+
+    public int RoleId{get; set;}
 
     public override bool Equals(object obj)
     {

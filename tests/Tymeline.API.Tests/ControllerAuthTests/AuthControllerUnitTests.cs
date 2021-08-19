@@ -67,7 +67,7 @@ namespace Tymeline.API.Tests
 
         private IUserRoles mockGetUserPermissions(string email){
             var UserPermissions = new UserRoles(email, new List<IRole>());
-            UserPermissions.Permissions.Add(new Role("test","value"));
+            UserPermissions.Roles.Add(new Role("test","value"));
             return UserPermissions;
         }
 
@@ -297,8 +297,8 @@ namespace Tymeline.API.Tests
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var parsedObject = JsonConvert.DeserializeObject<UserRoles>(responseObject);
             Assert.NotNull(parsedObject.Email);
-            Assert.NotNull(parsedObject.Permissions);
-            Assert.AreEqual(mockGetUserPermissions("test5@email.de").Permissions,parsedObject.Permissions);
+            Assert.NotNull(parsedObject.Roles);
+            Assert.AreEqual(mockGetUserPermissions("test5@email.de").Roles,parsedObject.Roles);
 
             
         }

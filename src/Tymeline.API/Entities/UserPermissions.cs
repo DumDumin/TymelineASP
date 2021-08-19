@@ -9,11 +9,11 @@ public class UserRoles : IUserRoles
     }
     public UserRoles(string email,List<IRole> permissions){
         this.Email = email;
-        this.Permissions = permissions;
+        this.Roles = permissions;
     }
 
     public string Email {get; set;}
 
     [JsonConverter(typeof(ListIPermissionsConverter))]
-    public List<IRole> Permissions { get; set; }
+    public List<IRole> Roles { get; set; }
 }

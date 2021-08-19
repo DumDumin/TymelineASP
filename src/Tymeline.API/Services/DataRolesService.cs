@@ -2,12 +2,12 @@ using System.Collections.Generic;
 
 public class DataRolesService : IDataRolesService
 {
-    public void AddRole(string roleName)
+    public void AddRole(IRole role)
     {
         throw new System.NotImplementedException();
     }
 
-    public void AddRoleToItem(string role, TymelineObject to)
+    public List<IRole> AddRoleToItem(string role, TymelineObject to)
     {
         throw new System.NotImplementedException();
     }
@@ -27,17 +27,22 @@ public class DataRolesService : IDataRolesService
         throw new System.NotImplementedException();
     }
 
-    public void AddUserRole(string email, IRole permission)
+    public List<IRole> AddUserRole(string email, IRole permission)
     {
         throw new System.NotImplementedException();
     }
 
-    public void AddUserRole(IUserRole userRole)
+    public List<IRole> AddUserRole(IUserRole userRole)
     {
         throw new System.NotImplementedException();
     }
 
-    public void getItemRoles(TymelineObject to)
+    public ITymelineObjectRoles GetItemRoles(string toId)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public List<IRole> GetRoles()
     {
         throw new System.NotImplementedException();
     }
@@ -47,7 +52,7 @@ public class DataRolesService : IDataRolesService
         throw new System.NotImplementedException();
     }
 
-    public void RemoveRole(string roleName)
+    public void RemoveRole(IRole role)
     {
         throw new System.NotImplementedException();
     }
@@ -72,12 +77,12 @@ public class DataRolesService : IDataRolesService
         throw new System.NotImplementedException();
     }
 
-    public void RemoveUserRole(string email, IRole role)
+    public List<IRole> RemoveUserRole(string email, IRole role)
     {
         throw new System.NotImplementedException();
     }
 
-    public void RemoveUserRole(IUserRole userRole)
+    public List<IRole> RemoveUserRole(IUserRole userRole)
     {
         throw new System.NotImplementedException();
     }

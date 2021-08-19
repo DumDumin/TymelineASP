@@ -33,14 +33,17 @@ namespace Tymeline.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {   
+           
             // services.Configure<CustomAuthenticationOptions>(Configuration.GetSection("CustomAuthenticationOptions"));
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["AppSettings:Secret"]));
 
-
+            services.AddSingleton<IAuthorizationMiddlewareResultHandler,
+                          MyAuthorizationMiddlewareResultHandler>();
 
             
             services.AddAuthorization(options => {
+                options.AddPolicy("CanAffectRoles", policy => policy.RequireClaim("CanAffectRoles"));
             });
             services.AddAuthentication(options =>  
             {  
@@ -75,11 +78,7 @@ namespace Tymeline.API
             services.AddScoped<IAuthService, AuthService>();
             services.AddControllers();
             
-            // .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new MyJsonConverter<IUserPermission, UserPermission>()));
-            
-            
-            // { o.SerializerSettings.ContractResolver.ResolveContract(typeof(IUserPermission)).Converter = new MyJsonConverter<IUserPermission, UserPermission>();});
-           
+          
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tymeline.API", Version = "v1" });

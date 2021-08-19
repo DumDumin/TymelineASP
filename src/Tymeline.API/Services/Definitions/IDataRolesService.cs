@@ -8,13 +8,17 @@ public interface IDataRolesService
     // roles can be assigned to more than one user
     // these roles just deal with 
     IUserRoles GetUserRoles(string email);
+    ITymelineObjectRoles GetItemRoles(string toId);
+    List<IRole> GetRoles();
     void SetUserRoles(IUserRoles roles);
-    void AddRole(string roleName);
-    void RemoveRole(string roleName);
-    void AddUserRole(IUserRole userRole);
-    void AddUserRole(string email, IRole role);
-    void RemoveUserRole(string email, IRole key);
-    void RemoveUserRole(IUserRole userRole);
+
+    void AddRole(IRole role);
+    
+    void RemoveRole(IRole role);
+    List<IRole> AddUserRole(IUserRole userRole);
+    List<IRole> AddUserRole(string email, IRole role);
+    List<IRole> RemoveUserRole(string email, IRole key);
+     List<IRole> RemoveUserRole(IUserRole userRole);
     // add methods for mapping roles to items
 
     List<IRole> AddRoleToItem(IRole role, TymelineObject to);
@@ -24,5 +28,5 @@ public interface IDataRolesService
     void RemoveRoleFromItems(IRole role, IEnumerable<TymelineObject> tos);
     // does this make sense?
 
-    void getItemRoles(TymelineObject to);
+    
 }

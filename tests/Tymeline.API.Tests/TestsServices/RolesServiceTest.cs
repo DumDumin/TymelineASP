@@ -74,7 +74,7 @@ namespace Tymeline.API.Tests
 
          private IUserRoles mockGetUserPermissions(string email){
             var UserPermissions = new UserRoles(email, new List<IRole>());
-            UserPermissions.Permissions.Add(new Role("test","value"));
+            UserPermissions.Roles.Add(new Role("test","value"));
             return UserPermissions;
         }
 
@@ -112,6 +112,26 @@ namespace Tymeline.API.Tests
             throw new ArgumentException();
         }
 
+
+
+        [Test]
+        public void TestGetUserRoles_For_Valid_Email(){}
+
+        [Test]
+        public void TestGetUserRoles_For_Invalid_Email(){}
+
+
+        [Test]
+        public void Test_SetUserRoles_For_Valid_Email(){}
+
+        [Test]
+        public void Test_SetUserRoles_For_Invalid_Email(){}
+
       
+        [Test]
+        public void Test_AddRole_New_Role(){}
+
+
+
     }
 }

@@ -39,7 +39,7 @@ public class JwtService : IJwtService
         }
     public string createJwt(string userMail)
     {
-        List<IRole> userRoles = _rolesService.GetUserRoles(userMail).Permissions.Where(permission => permission.Type.Equals("Frontend")).ToList();
+        List<IRole> userRoles = _rolesService.GetUserRoles(userMail).Roles.Where(permission => permission.Type.Equals("Frontend")).ToList();
 
 
         var utcNow = DateTime.UtcNow; 
