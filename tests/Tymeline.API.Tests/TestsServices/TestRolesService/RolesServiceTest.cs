@@ -113,6 +113,32 @@ namespace Tymeline.API.Tests
         }
 
 
+        [Test]
+        public void Test_GetUserRoles_For_Valid_Email_Expect_IUserRoles(){}
+        public void Test_GetUserRoles_For_Invalid_Email_Expect_Error(){}
+
+        public void Test_GetItemRoles_For_Valid_Item_Expect_ITymelineObjectRoles(){
+        
+        }
+        public void Test_GetItemRoles_For_Invalid_Item_Expect_Error(){}
+
+        public void Test_GetRoles_Expect_ListOfRoles(){}
+
+        public void Test_SetUserRoles_For_Valid_Email_Expect_(){}
+        public void Test_SetUserRoles_For_Invalid_Email_Expect_Error(){}
+
+        public void Test_AddRole_Expect_Role_To_Be_Saved(){}
+        public void Test_RemoveRole_Expect_Role_To_Be_Removed(){}
+
+        public void Test_AddUserRole_Impl1_For_Valid_Email_Expect_Role_In_Returned_List(){}
+        public void Test_AddUserRole_Impl2_For_Valid_Email_Expect_Role_In_Returned_List(){}
+        public void Test_AddUserRole_Impl1_For_Invalid_Email_Expect_Error(){}
+        public void Test_AddUserRole_Impl2_For_Invalid_Email_Expect_Error(){}
+        public void Test_RemoveUserRole_Impl1_For_Valid_Email_Expect_Role_Not_In_Returned_List(){}
+        public void Test_RemoveUserRole_Impl2_For_Valid_Email_Expect_Role_Not_In_Returned_List(){}
+        public void Test_RemoveUserRole_Impl1_For_Invalid_Email_Expect_Error(){}
+        public void Test_RemoveUserRole_Impl2_For_Invalid_Email_Expect_Error(){}
+
 
         [Test]
         public void TestGetUserRoles_For_Valid_Email(){}

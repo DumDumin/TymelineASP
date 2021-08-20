@@ -633,8 +633,6 @@ namespace Tymeline.API.Tests
             assertObject.Roles.Should().NotContain(role);
 
         }
-
-
         
 
 
