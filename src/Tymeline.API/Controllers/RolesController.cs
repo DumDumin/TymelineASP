@@ -71,7 +71,7 @@ namespace Tymeline.API.Controllers
             {
                 // returns the permissions for some item
                 ITymelineObjectRoles s = _dataRolesService.GetItemRoles(item);
-                HttpTymelineObjectRoles returnObject = new HttpTymelineObjectRoles { tymelineObject = s.TymelineObject, Roles = s.Roles.ConvertAll(o => (Role)o) };
+                HttpTymelineObjectRoles returnObject = new HttpTymelineObjectRoles { tymelineObjectId = s.TymelineObject.Id, Roles = s.Roles.ConvertAll(o => (Role)o) };
                 return StatusCode(200, returnObject);
             }
             catch (System.Exception)
@@ -114,8 +114,8 @@ namespace Tymeline.API.Controllers
 
             try
             {
-                List<IRole> newRoles = _dataRolesService.AddRoleToItem(roleIncrement.Role, roleIncrement.tymelineObject);
-                return StatusCode(200, new HttpTymelineObjectRoles { Roles = newRoles.ConvertAll(o => (Role)o), tymelineObject = roleIncrement.tymelineObject });
+                List<IRole> newRoles = _dataRolesService.AddRoleToItem(roleIncrement.Role, roleIncrement.tymelineObjectId);
+                return StatusCode(200, new HttpTymelineObjectRoles { Roles = newRoles.ConvertAll(o => (Role)o), tymelineObjectId = roleIncrement.tymelineObjectId });
             }
             catch (System.Exception)
             {
@@ -130,8 +130,8 @@ namespace Tymeline.API.Controllers
         {
             try
             {
-                List<IRole> newRoles = _dataRolesService.RemoveRoleFromItem(roleIncrement.Role, roleIncrement.tymelineObject);
-                return StatusCode(200, new HttpTymelineObjectRoles { Roles = newRoles.ConvertAll(o => (Role)o), tymelineObject = roleIncrement.tymelineObject });
+                List<IRole> newRoles = _dataRolesService.RemoveRoleFromItem(roleIncrement.Role, roleIncrement.tymelineObjectId);
+                return StatusCode(200, new HttpTymelineObjectRoles { Roles = newRoles.ConvertAll(o => (Role)o), tymelineObjectId = roleIncrement.tymelineObjectId });
             }
             catch (System.Exception)
             {

@@ -88,8 +88,8 @@ namespace Tymeline.API.Tests
             _rolesService.Setup(s => s.AddUserRole(It.IsAny<IUserRole>())).Returns((IUserRole userRole) => MockAddRoleToUser(userRole.Email, userRole.Roles));
             _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<string>(), It.IsAny<IRole>())).Returns((string Email, IRole role) => MockRemoveUserRole(Email, role));
             _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<IUserRole>())).Returns((IUserRole userRole) => MockRemoveUserRole(userRole.Email, userRole.Roles));
-            _rolesService.Setup(s => s.AddRoleToItem(It.IsAny<IRole>(),It.IsAny<TymelineObject>())).Returns((IRole role, TymelineObject to) => mockAddRoleToItem(role,to));
-            _rolesService.Setup(s => s.RemoveRoleFromItem(It.IsAny<IRole>(),It.IsAny<TymelineObject>())).Returns((IRole role, TymelineObject to) => mockRemoveRoleFromItem(role,to));
+            _rolesService.Setup(s => s.AddRoleToItem(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole role, string to) => mockAddRoleToItem(role,to));
+            _rolesService.Setup(s => s.RemoveRoleFromItem(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole role, string to) => mockRemoveRoleFromItem(role,to));
             _authService.Setup(s => s.getUsers()).Returns(() => MockGetUsers());
             _rolesService.Setup(s => s.AddRole(It.IsAny<IRole>())).Callback((IRole role)=> MockAddRole(role));
             _rolesService.Setup(s => s.RemoveRole(It.IsAny<IRole>())).Callback((IRole role)=> MockRemoveRole(role));
@@ -135,14 +135,6 @@ namespace Tymeline.API.Tests
             return roleList;
         }
 
-
-        List<IRole> mockRemoveRoleFromItem(IRole role, TymelineObject to){
-            tymelineObjectRoles.TryGetValue(to.Id,out List<IRole> roles);
-            roles.Remove(role);
-            return roles;
-        }
-
-
         List<IRole> mockRemoveRoleFromItem(IRole role, string to){
             tymelineObjectRoles.TryGetValue(to,out List<IRole> roles);
             roles.Remove(role);
@@ -163,9 +155,9 @@ namespace Tymeline.API.Tests
         }
        
 
-          List<IRole> mockAddRoleToItem(IRole role, TymelineObject tymelineObject){
+          List<IRole> mockAddRoleToItem(IRole role, string toId){
             MockAddRole(role);
-            tymelineObjectRoles.TryGetValue(tymelineObject.Id,out List<IRole> roles);
+            tymelineObjectRoles.TryGetValue(toId,out List<IRole> roles);
             if(!roles.Contains(role)){
                 // only add each role once!
                 roles.Add(role);
@@ -440,7 +432,7 @@ namespace Tymeline.API.Tests
         {  // setup
             UserCredentials creds = await Login();
             TymelineObject tymelineObject = tymelineList[TestUtil.RandomIntWithMax(tymelineList.Count)];
-            var payload = new HttpTymelineObjectRolesIncrement{Role= role, tymelineObject = tymelineObject};
+            var payload = new HttpTymelineObjectRolesIncrement{Role= role, tymelineObjectId = tymelineObject.Id};
 
             var roleResponse = await _client.PostAsync($"https://localhost:5001/roles/additemrole",JsonContent.Create(payload));
 
@@ -457,7 +449,7 @@ namespace Tymeline.API.Tests
         {  // setup
             UserCredentials creds = await Login();
             TymelineObject tymelineObject = tymelineList[TestUtil.RandomIntWithMax(tymelineList.Count)];
-            var payload = new HttpTymelineObjectRolesIncrement{Role= role, tymelineObject = tymelineObject};
+            var payload = new HttpTymelineObjectRolesIncrement{Role= role, tymelineObjectId = tymelineObject.Id};
 
             var setup = await _client.PostAsync($"https://localhost:5001/roles/additemrole",JsonContent.Create(payload));
             var setupresponse = await setup.Content.ReadAsStringAsync();
@@ -482,8 +474,8 @@ namespace Tymeline.API.Tests
             UserCredentials creds = await Login();
 
             TymelineObject tymelineObject = tymelineList[TestUtil.RandomIntWithMax(tymelineList.Count)];
-            var payload = new HttpTymelineObjectRolesIncrement{Role= role, tymelineObject = tymelineObject};
-            var payloadToRemove = new HttpTymelineObjectRolesIncrement{Role= roleToRemove, tymelineObject = tymelineObject};
+            var payload = new HttpTymelineObjectRolesIncrement{Role= role, tymelineObjectId = tymelineObject.Id};
+            var payloadToRemove = new HttpTymelineObjectRolesIncrement{Role= roleToRemove, tymelineObjectId = tymelineObject.Id};
 
             var setup = await _client.PostAsync($"https://localhost:5001/roles/additemrole",JsonContent.Create(payload));
             var setupToRemove = await _client.PostAsync($"https://localhost:5001/roles/additemrole",JsonContent.Create(payloadToRemove));
@@ -506,8 +498,8 @@ namespace Tymeline.API.Tests
         { // setup
             UserCredentials creds = await Login();
             TymelineObject tymelineObject = tymelineList[TestUtil.RandomIntWithMax(tymelineList.Count)];
-            var payload = new HttpTymelineObjectRolesIncrement{Role= role, tymelineObject = tymelineObject};
-            var payloadToRemove = new HttpTymelineObjectRolesIncrement{Role= roleToRemove, tymelineObject = tymelineObject};
+            var payload = new HttpTymelineObjectRolesIncrement{Role= role, tymelineObjectId = tymelineObject.Id};
+            var payloadToRemove = new HttpTymelineObjectRolesIncrement{Role= roleToRemove, tymelineObjectId = tymelineObject.Id};
 
             var setup = await _client.PostAsync($"https://localhost:5001/roles/additemrole",JsonContent.Create(payload));           
             // given

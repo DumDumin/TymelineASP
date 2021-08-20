@@ -21,11 +21,11 @@ public interface IDataRolesService
      List<IRole> RemoveUserRole(IUserRole userRole);
     // add methods for mapping roles to items
 
-    List<IRole> AddRoleToItem(IRole role, TymelineObject to);
-    void AddRoleToItems(IRole role, IEnumerable<TymelineObject> tos);
+    List<IRole> AddRoleToItem(IRole role, string toId);
+    // void AddRoleToItems(IRole role, IEnumerable<TymelineObject> tos);
     // does this make sense?
-    List<IRole> RemoveRoleFromItem(IRole role, TymelineObject to);
-    void RemoveRoleFromItems(IRole role, IEnumerable<TymelineObject> tos);
+    List<IRole> RemoveRoleFromItem(IRole role, string toId);
+    // void RemoveRoleFromItems(IRole role, IEnumerable<TymelineObject> tos);
     // does this make sense?
 
     
