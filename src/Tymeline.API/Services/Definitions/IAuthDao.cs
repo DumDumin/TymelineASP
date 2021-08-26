@@ -6,7 +6,7 @@ public interface IAuthDao{
 
     IEnumerable<string> GetUserPermissions(IUser user);
 
-    Dictionary<string,IUser> GetUsers();
+    List<IUser> GetUsers();
 
     IUser getUserByMail(string mail);
 

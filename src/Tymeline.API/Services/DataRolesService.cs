@@ -2,67 +2,77 @@ using System.Collections.Generic;
 
 public class DataRolesService : IDataRolesService
 {
+    public IDataRolesDao _rolesDao { get; private set; }
+
+
+
+    public DataRolesService(IDataRolesDao rolesDao){
+        _rolesDao = rolesDao;
+    }
+
+
     public void AddRole(IRole role)
     {
-        throw new System.NotImplementedException();
+        _rolesDao.AddRole(role);
     }
 
 
     public List<IRole> AddRoleToItem(IRole role, string toId)
     {
-        throw new System.NotImplementedException();
+        return _rolesDao.AddRoleToItem(role,toId);
     }
 
 
 
 
-    public List<IRole> AddUserRole(string email, IRole permission)
+    public List<IRole> AddUserRole(IRole role,string email)
     {
-        throw new System.NotImplementedException();
+        return _rolesDao.AddUserRole(role,email);
+        
     }
 
     public List<IRole> AddUserRole(IUserRole userRole)
     {
-        throw new System.NotImplementedException();
+        return _rolesDao.AddUserRole(userRole.Role,userRole.Email);
     }
 
     public ITymelineObjectRoles GetItemRoles(string toId)
     {
-        throw new System.NotImplementedException();
+        return _rolesDao.GetItemRoles(toId);
     }
 
     public List<IRole> GetRoles()
     {
-        throw new System.NotImplementedException();
+        return _rolesDao.GetAllRoles();
     }
 
     public IUserRoles GetUserRoles(string email)
     {
-        throw new System.NotImplementedException();
+        return _rolesDao.GetUserRoles(email);
     }
 
     public void RemoveRole(IRole role)
     {
-        throw new System.NotImplementedException();
+        _rolesDao.RemoveRole(role);
     }
 
     public List<IRole> RemoveRoleFromItem(IRole role, string toId)
     {
-        throw new System.NotImplementedException();
+        return _rolesDao.RemoveRoleFromItem(role,toId);
     }
 
-    public List<IRole> RemoveUserRole(string email, IRole role)
+    public List<IRole> RemoveUserRole(IRole role,string email)
     {
-        throw new System.NotImplementedException();
+        return _rolesDao.RemoveUserRole(role,email);
     }
 
     public List<IRole> RemoveUserRole(IUserRole userRole)
     {
-        throw new System.NotImplementedException();
+        return _rolesDao.RemoveUserRole(userRole.Role,userRole.Email);
     }
 
     public void SetUserRoles(IUserRoles permissions)
     {
-        throw new System.NotImplementedException();
+        _rolesDao.SetUserRoles(permissions);
     }
 }

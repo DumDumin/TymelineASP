@@ -1,13 +1,13 @@
 
 
-public class UserPermission: IUserRole{
+public class UserRole: IUserRole{
 
-    public UserPermission(string mail, IRole perm){
+    public UserRole(string mail, IRole perm){
         Email = mail;
-        Roles = perm;
+        Role = perm;
     }
     public string Email{get;set;}
 
-    public IRole Roles{get;set;}
+    public IRole Role{get;set;}
 
 }

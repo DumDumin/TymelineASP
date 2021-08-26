@@ -84,10 +84,10 @@ namespace Tymeline.API.Tests
             _rolesService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
             _rolesService.Setup(s => s.GetItemRoles(It.IsAny<string>())).Returns((string itemId) => MockGetRolesByItem(itemId));
             _rolesService.Setup(s => s.SetUserRoles(It.IsAny<IUserRoles>())).Callback((IUserRoles permissions) => mockSetRoles(permissions));
-            _rolesService.Setup(s => s.AddUserRole(It.IsAny<string>(), It.IsAny<IRole>())).Returns((string email, IRole permission) => MockAddRoleToUser(email, permission));
-            _rolesService.Setup(s => s.AddUserRole(It.IsAny<IUserRole>())).Returns((IUserRole userRole) => MockAddRoleToUser(userRole.Email, userRole.Roles));
-            _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<string>(), It.IsAny<IRole>())).Returns((string Email, IRole role) => MockRemoveUserRole(Email, role));
-            _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<IUserRole>())).Returns((IUserRole userRole) => MockRemoveUserRole(userRole.Email, userRole.Roles));
+            _rolesService.Setup(s => s.AddUserRole(It.IsAny<IRole>(),It.IsAny<string>())).Returns((string email, IRole permission) => MockAddRoleToUser(email, permission));
+            _rolesService.Setup(s => s.AddUserRole(It.IsAny<IUserRole>())).Returns((IUserRole userRole) => MockAddRoleToUser(userRole.Email, userRole.Role));
+            _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<IRole>(),It.IsAny<string>())).Returns((string Email, IRole role) => MockRemoveUserRole(Email, role));
+            _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<IUserRole>())).Returns((IUserRole userRole) => MockRemoveUserRole(userRole.Email, userRole.Role));
             _rolesService.Setup(s => s.AddRoleToItem(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole role, string to) => mockAddRoleToItem(role,to));
             _rolesService.Setup(s => s.RemoveRoleFromItem(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole role, string to) => mockRemoveRoleFromItem(role,to));
             _authService.Setup(s => s.getUsers()).Returns(() => MockGetUsers());
@@ -108,19 +108,14 @@ namespace Tymeline.API.Tests
         public void TearDown()
         {
             _client.DefaultRequestHeaders.Clear();
-            // roleList.Clear();
-            // tymelineList.Clear();
-            // tymelineObjectRoles.Clear();
-            // userdict.Clear();
-            // userRoles.Clear();
+         
         }
 
 
         private ITymelineObjectRoles MockGetRolesByItem(string itemId){
         
-            var s = tymelineList.First(tymelineObject => tymelineObject.Id.Equals(itemId));
             tymelineObjectRoles.TryGetValue(itemId,out List<IRole> roles);
-            return new TymelineObjectRoles(s,roles);
+            return new TymelineObjectRoles(itemId,roles);
 
         }
 
@@ -150,7 +145,7 @@ namespace Tymeline.API.Tests
 
         private List<IUser> MockGetUsers()
         {
-            return userdict.Values.ToList().Select(element => element).ToList();
+            return userdict.Values.ToList();
 
         }
        

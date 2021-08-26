@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-public class MyAuthorizationMiddlewareResultHandler : IAuthorizationMiddlewareResultHandler
+public class CustomAuthenticationResultHandler : IAuthorizationMiddlewareResultHandler
 {
    private readonly AuthorizationMiddlewareResultHandler 
         DefaultHandler = new AuthorizationMiddlewareResultHandler();

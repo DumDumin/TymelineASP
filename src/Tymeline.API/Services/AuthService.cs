@@ -30,7 +30,7 @@ public class AuthService : IAuthService
 
     public List<IUser> getUsers()
     {
-        throw new System.NotImplementedException();
+        return AuthDao.GetUsers();
     }
 
 
@@ -89,11 +89,11 @@ public class AuthService : IAuthService
 
     public void AddUserRole(IUserRole userRole)
     {
-        _dataRolesService.AddUserRole(userRole.Email,userRole.Roles);
+        _dataRolesService.AddUserRole(userRole.Role,userRole.Email);
     }
 
     public void RemoveUserRole(IUserRole userRole){
-        _dataRolesService.RemoveUserRole(userRole.Email,userRole.Roles);
+        _dataRolesService.RemoveUserRole(userRole.Role,userRole.Email);
 
     }
     

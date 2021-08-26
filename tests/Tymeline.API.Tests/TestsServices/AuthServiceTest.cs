@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
@@ -78,8 +79,8 @@ namespace Tymeline.API.Tests
         }
 
 
-        Dictionary<string, IUser> MockGetUser(){
-            return userdict;
+        List<IUser> MockGetUser(){
+            return userdict.Values.ToList();
         }
 
         IUser MockGetUserByMail(string mail){

@@ -19,7 +19,7 @@ public class AuthDao : IAuthDao
         throw new System.NotImplementedException();
     }
 
-    public Dictionary<string,IUser> GetUsers()
+    public List<IUser> GetUsers()
     {
         throw new System.NotImplementedException();
     }

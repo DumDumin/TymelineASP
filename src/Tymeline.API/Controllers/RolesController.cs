@@ -71,7 +71,7 @@ namespace Tymeline.API.Controllers
             {
                 // returns the permissions for some item
                 ITymelineObjectRoles s = _dataRolesService.GetItemRoles(item);
-                HttpTymelineObjectRoles returnObject = new HttpTymelineObjectRoles { tymelineObjectId = s.TymelineObject.Id, Roles = s.Roles.ConvertAll(o => (Role)o) };
+                HttpTymelineObjectRoles returnObject = new HttpTymelineObjectRoles { tymelineObjectId = s.TymelineObject, Roles = s.Roles.ConvertAll(o => (Role)o) };
                 return StatusCode(200, returnObject);
             }
             catch (System.Exception)
@@ -140,9 +140,9 @@ namespace Tymeline.API.Controllers
         }
 
 
-        [Authorize]
         [HttpPost]
         [Route("addroletouser")]
+        [Authorize]
         public ActionResult<List<Role>> AddRoleToUser([FromBody] HttpUserRole userPermission)
         {
             try

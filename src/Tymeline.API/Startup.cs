@@ -39,7 +39,7 @@ namespace Tymeline.API
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["AppSettings:Secret"]));
 
             services.AddSingleton<IAuthorizationMiddlewareResultHandler,
-                          MyAuthorizationMiddlewareResultHandler>();
+                          CustomAuthenticationResultHandler>();
 
             
             services.AddAuthorization(options => {
@@ -69,6 +69,7 @@ namespace Tymeline.API
 
             
             services.AddTransient<MySqlConnection>(_ => new MySqlConnection(Configuration["AppSettings:SqlConnection:MySqlConnectionString"]));
+            services.AddSingleton<IDataRolesDao,DataRolesDao>();
             services.AddSingleton<IDataRolesService,DataRolesService>();
             services.AddSingleton<IJwtService,JwtService>();
             services.AddSingleton<UtilService>();

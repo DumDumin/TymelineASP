@@ -7,7 +7,7 @@ public class HttpUserRole{
 
 
     public IUserRole ToIUserRole(){
-        var s = new UserPermission(this.Email, this.Role);
+        var s = new UserRole(this.Email, this.Role);
         return s;
     }
     public string Email{get;set;}

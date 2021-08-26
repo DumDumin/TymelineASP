@@ -1,12 +1,12 @@
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class UserRoles : IUserRoles
 {
 
-    public UserRoles(){
+    public UserRoles(){}
 
-    }
     public UserRoles(string email,List<IRole> permissions){
         this.Email = email;
         this.Roles = permissions;
@@ -16,4 +16,5 @@ public class UserRoles : IUserRoles
 
     [JsonConverter(typeof(ListIPermissionsConverter))]
     public List<IRole> Roles { get; set; }
+
 }

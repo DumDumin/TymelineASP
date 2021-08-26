@@ -16,8 +16,8 @@ public interface IDataRolesService
     
     void RemoveRole(IRole role);
     List<IRole> AddUserRole(IUserRole userRole);
-    List<IRole> AddUserRole(string email, IRole role);
-    List<IRole> RemoveUserRole(string email, IRole key);
+    List<IRole> AddUserRole(IRole role,string email);
+    List<IRole> RemoveUserRole(IRole role,string email);
      List<IRole> RemoveUserRole(IUserRole userRole);
     // add methods for mapping roles to items
 
