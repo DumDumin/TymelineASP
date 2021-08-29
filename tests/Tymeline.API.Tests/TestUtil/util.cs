@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MySql.Data.MySqlClient;
 
 public class TestUtil
 {
@@ -106,4 +107,102 @@ public class TestUtil
 
         return returnDict;
     }
+
+
+
+    static public void setupDB(MySqlConnection connection){
+        connection.Open();
+            try
+            {
+            // new MySqlCommand("drop table IF EXISTS Items",connection).ExecuteNonQuery();
+            new MySqlCommand("drop table IF EXISTS UserRoleRelation",connection).ExecuteNonQuery();
+            new MySqlCommand("drop table IF EXISTS ItemRoleRelation",connection).ExecuteNonQuery();
+            new MySqlCommand("drop table IF EXISTS Roles",connection).ExecuteNonQuery();
+            new MySqlCommand("drop table IF EXISTS Users",connection).ExecuteNonQuery();
+            new MySqlCommand("drop table IF EXISTS Content",connection).ExecuteNonQuery();
+            new MySqlCommand("drop table IF EXISTS TymelineObjects",connection).ExecuteNonQuery();
+            
+            
+            // new MySqlCommand("create table Content ( id varchar(255) PRIMARY KEY , text varchar(255)); ",connection).ExecuteNonQuery();
+            // new MySqlCommand("create table TymelineObjects ( id varchar(255) PRIMARY KEY, length int, start int, canChangeLength bool, canMove bool, ContentId varchar(255) ,constraint fk_content foreign key (ContentId) references Content(id) on update restrict on Delete Cascade); ",connection).ExecuteNonQuery();
+
+            
+            new MySqlCommand("create table TymelineObjects ( id varchar(255) PRIMARY KEY, length int, start int, canChangeLength bool, canMove bool, ContentId varchar(255), INDEX idx_ContentId(ContentId) ); ",connection).ExecuteNonQuery();
+            new MySqlCommand("create table Content ( fk_tymeline varchar(255) , text varchar(255),constraint fk foreign key (fk_tymeline) references TymelineObjects(ContentId) on update restrict on Delete Cascade); ",connection).ExecuteNonQuery();
+            
+            new MySqlCommand("create table if not exists Users (user_id varchar(255) primary key, email varchar(255) not null, password varchar(255) not null, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",connection).ExecuteNonQuery();
+            new MySqlCommand("create index email on Users(email)",connection).ExecuteNonQuery();
+
+            new MySqlCommand("create table if not exists Roles(role_id int primary key, role_name varchar(255) not null, role_value varchar(255) not null)",connection).ExecuteNonQuery();
+
+            new MySqlCommand(@"create table if not exists UserRoleRelation(user_fk varchar(255) not null, role_fk int not null,
+            foreign key (user_fk) references Users (user_id) on update restrict on delete cascade,
+            foreign key (role_fk) references Roles (role_id) on update restrict on delete cascade,
+            unique(user_fk, role_fk) )",connection).ExecuteNonQuery();
+
+
+            new MySqlCommand(@"create table if not exists ItemRoleRelation(item_fk varchar(64) not null, role_fk int not null,
+            foreign key (item_fk) references TymelineObjects (id) on update restrict on delete cascade,
+            foreign key (role_fk) references Roles (role_id) on update restrict on delete cascade,
+            unique(item_fk, role_fk) )",connection).ExecuteNonQuery();
+            }
+            catch (System.Exception)
+            {
+                
+                throw;
+            }
+            finally{
+                connection.Close();
+            }
+    }
+
+
+    public static void prepopulateTymelineObjects(MySqlConnection connection){
+            try
+            {
+            connection.Open();
+
+            var command = new MySqlCommand("insert into Content values (@id,@text)",connection);
+            var commandtymeline = new MySqlCommand("insert into TymelineObjects (id, canChangeLength, canMove, start, length, ContentId) values(@id,true,false,FLOOR(RAND()*10000),FLOOR(RAND()*1000000),@guid); ",connection);
+            var initialContentId = Guid.NewGuid().ToString();
+            var initialTymelineId= Guid.NewGuid().ToString();
+
+
+          
+
+            commandtymeline.Parameters.AddWithValue("@id",initialTymelineId);
+            commandtymeline.Parameters.AddWithValue("@guid",initialContentId);
+
+            commandtymeline.ExecuteNonQuery();
+
+
+            command.Parameters.AddWithValue("@id",initialContentId);
+            command.Parameters.AddWithValue("@text",TestUtil.RandomString(50)); 
+            command.ExecuteNonQuery();
+
+
+            for (int i = 0; i < 50; i++)
+            {
+                var idContent = Guid.NewGuid().ToString();
+                var idTymeline = Guid.NewGuid().ToString();
+                commandtymeline.Parameters.Clear();
+                command.Parameters.Clear();
+                commandtymeline.Parameters.AddWithValue("@id",idTymeline);
+                commandtymeline.Parameters.AddWithValue("@guid",idContent);
+                commandtymeline.ExecuteNonQuery();
+                command.Parameters.AddWithValue("@id",idContent);
+                command.Parameters.AddWithValue("@text",TestUtil.RandomString(50));
+                command.ExecuteNonQuery();
+                
+            }
+       
+            }
+            catch (System.Exception)
+            {
+                throw;
+            }
+            finally{
+                connection.Close();
+            }
+        }
 }

@@ -106,8 +106,14 @@ namespace Tymeline.API.Controllers
             
             try
             {
-                var updatedTymelineObject = _timelineService.UpdateById(data.Id,data.tymelineObject);
-                return StatusCode(200,updatedTymelineObject);
+                if(data.Id.Equals(data.tymelineObject.Id)){
+                    var updatedTymelineObject = _timelineService.UpdateById(data.Id,data.tymelineObject);
+                    return StatusCode(200,updatedTymelineObject);
+
+                }
+                else{
+                    return StatusCode(500,"sent ids dont match");
+                }
             }
 
             

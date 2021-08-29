@@ -17,6 +17,7 @@ using Tymeline.API.Controllers;
 
 namespace Tymeline.API.Tests
 {
+    [Category("Service")]
     public class RolesServiceTest : OneTimeSetUpAttribute
     {
         IAuthService _authService;
@@ -45,12 +46,12 @@ namespace Tymeline.API.Tests
             roleList = TestUtil.CreateRoleList();
 
             tymelineList = TestUtil.setupTymelineList();
-            tymelineObjectRoles = TestUtil.setupRoles(tymelineList,roleList);
+            tymelineObjectRoles = TestUtil.setupRoles(tymelineList, roleList);
 
             userdict = TestUtil.createUserDict();
-            userRoles = TestUtil.createRoleDict(userdict,roleList);
+            userRoles = TestUtil.createRoleDict(userdict, roleList);
 
-            tymelineObjectRoles = TestUtil.setupRoles(tymelineList,roleList);
+            tymelineObjectRoles = TestUtil.setupRoles(tymelineList, roleList);
             _appSettings = _appSettingsOptions.Value;
             _authDao = new Moq.Mock<IAuthDao>();
             _rolesDao = new Moq.Mock<IDataRolesDao>();
@@ -61,92 +62,112 @@ namespace Tymeline.API.Tests
             _authDao.Setup(s => s.getUserByMail(It.IsAny<string>())).Returns((string mail) => MockGetUserByMail(mail));
             _authDao.Setup(s => s.GetUsers()).Returns(() => MockGetUser());
             _authDao.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials user) => MockRegister(user));
-            _authDao.Setup(s => s.GetUserPermissions(It.IsAny<IUser>())).Returns((IUser user) => GetUserPermissions(user));
             _authDao.Setup(s => s.RemoveUser(It.IsAny<IUser>())).Callback((IUser user) => MockRemoveUser(user));
             _authDao.Setup(s => s.ChangePassword(It.IsAny<IUser>(), It.IsAny<string>())).Returns((IUser user, string password) => MockChangePassword(user, password));
-            
-            
-            _rolesDao.Setup( s => s.SetUserRoles(It.IsAny<IUserRoles>())).Callback((IUserRoles s)  => mockSetUserRoles(s));
-            _rolesDao.Setup( s => s.RemoveUserRole(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole r,string s)  => mockRemoveUserRole(r,s));
-            _rolesDao.Setup( s => s.RemoveRoleFromItem(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole r, string i)  => mockRemoveRoleFromItem(r,i));
-            _rolesDao.Setup( s => s.RemoveRole(It.IsAny<IRole>())).Callback((IRole s)  => mockRemoveRole(s));
-            _rolesDao.Setup( s => s.GetUserRoles(It.IsAny<string>())).Returns((string s)  => mockGetUserRoles(s));
-            _rolesDao.Setup( s => s.GetItemRoles(It.IsAny<string>())).Returns((string s)  => mockGetItemRoles(s));
-            _rolesDao.Setup( s => s.GetAllRoles()).Returns(()  => mockGetAllRoles());
-            _rolesDao.Setup( s => s.AddUserRole(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole r, string user)  => mockAddUserRole(r,user));
-            _rolesDao.Setup( s => s.AddRoleToItem(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole r, string item)  => mockAddItemRole(r,item));
-            _rolesDao.Setup( s => s.AddRole(It.IsAny<IRole>())).Callback((IRole s)  => mockAddRole(s));
-            
-            
-            }
+
+
+            _rolesDao.Setup(s => s.SetUserRoles(It.IsAny<IUserRoles>())).Callback((IUserRoles s) => mockSetUserRoles(s));
+            _rolesDao.Setup(s => s.RemoveUserRole(It.IsAny<IRole>(), It.IsAny<string>())).Returns((IRole r, string s) => mockRemoveUserRole(r, s));
+            _rolesDao.Setup(s => s.RemoveRoleFromItem(It.IsAny<IRole>(), It.IsAny<string>())).Returns((IRole r, string i) => mockRemoveRoleFromItem(r, i));
+            _rolesDao.Setup(s => s.RemoveRole(It.IsAny<IRole>())).Callback((IRole s) => mockRemoveRole(s));
+            _rolesDao.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string s) => mockGetUserRoles(s));
+            _rolesDao.Setup(s => s.GetItemRoles(It.IsAny<string>())).Returns((string s) => mockGetItemRoles(s));
+            _rolesDao.Setup(s => s.GetAllRoles()).Returns(() => mockGetAllRoles());
+            _rolesDao.Setup(s => s.AddUserRole(It.IsAny<IRole>(), It.IsAny<string>())).Returns((IRole r, string user) => mockAddUserRole(r, user));
+            _rolesDao.Setup(s => s.AddRoleToItem(It.IsAny<IRole>(), It.IsAny<string>())).Returns((IRole r, string item) => mockAddItemRole(r, item));
+            _rolesDao.Setup(s => s.AddRole(It.IsAny<IRole>())).Callback((IRole s) => mockAddRole(s));
+
+        
+        }
 
         private void mockAddRole(IRole s)
         {
-            if (!roleList.Contains(s)){
+            if (!roleList.Contains(s))
+            {
                 roleList.Add(s);
             }
         }
 
         private List<IRole> mockRemoveUserRole(IRole r, string s)
         {
-            
-           
-            if(userRoles.TryGetValue(s, out var RoleList)){
 
-            RoleList.Remove(r);
-            return RoleList;
+
+            if (userRoles.TryGetValue(s, out var RoleList))
+            {
+
+                RoleList.Remove(r);
+                return RoleList;
             }
-            throw new KeyNotFoundException();
-          
+            else
+            {
+                throw new KeyNotFoundException();
+            }
+
         }
 
         private List<IRole> mockRemoveRoleFromItem(IRole r, string i)
         {
-           
-            if(tymelineObjectRoles.TryGetValue(i, out var RoleList)){
-            RoleList.Remove(r);
-            return RoleList;
-                
+
+            if (tymelineObjectRoles.TryGetValue(i, out var RoleList))
+            {
+                RoleList.Remove(r);
+                return RoleList;
+
             }
-           throw new KeyNotFoundException();
+            else
+            {
+                throw new KeyNotFoundException();
+
+            }
         }
 
         private void mockRemoveRole(IRole role)
         {
-            if (roleList.Contains(role)){
-               
-                var relevantTymelineObjects =  tymelineObjectRoles.Where(s => s.Value.Contains(role)).ToList().Select(kvpair => kvpair.Key).ToList();
-                relevantTymelineObjects.ForEach(to => mockRemoveRoleFromItem(role,to));
+            if (roleList.Contains(role))
+            {
+
+                var relevantTymelineObjects = tymelineObjectRoles.Where(s => s.Value.Contains(role)).ToList().Select(kvpair => kvpair.Key).ToList();
+                relevantTymelineObjects.ForEach(to => mockRemoveRoleFromItem(role, to));
                 var relevantUsers = userRoles.Where(s => s.Value.Contains(role)).ToList().Select(kvpair => kvpair.Key).ToList();
-                relevantUsers.ForEach(user => mockRemoveUserRole(role,user));
+                relevantUsers.ForEach(user => mockRemoveUserRole(role, user));
                 roleList.Remove(role);
             }
         }
 
         private IUserRoles mockGetUserRoles(string s)
         {
-         
-            if(userRoles.TryGetValue(s, out var RoleList)){
-            IUserRoles user = new UserRoles(s,RoleList);
-            return user;
+
+            if (userRoles.TryGetValue(s, out var RoleList))
+            {
+                IUserRoles user = new UserRoles(s, RoleList);
+                return user;
 
             }
-            throw new KeyNotFoundException();
-            
+            else
+            {
+                throw new KeyNotFoundException();
+
+            }
+
         }
 
         private ITymelineObjectRoles mockGetItemRoles(string s)
         {
-           
-            
-            if(tymelineObjectRoles.TryGetValue(s, out var RoleList)){
-            ITymelineObjectRoles item = new TymelineObjectRoles(s,RoleList);
-            return item;
+
+
+            if (tymelineObjectRoles.TryGetValue(s, out var RoleList))
+            {
+                ITymelineObjectRoles item = new TymelineObjectRoles(s, RoleList);
+                return item;
             }
-            throw new KeyNotFoundException();
-                
-            
-           
+            else
+            {
+                throw new KeyNotFoundException();
+
+            }
+
+
+
         }
 
         private List<IRole> mockGetAllRoles()
@@ -155,52 +176,66 @@ namespace Tymeline.API.Tests
         }
 
 
-        private void mockSetUserRoles(IUserRoles s){
-            if(userRoles.TryGetValue(s.Email, out var RoleList)){
+        private void mockSetUserRoles(IUserRoles s)
+        {
+            if (userRoles.TryGetValue(s.Email, out var RoleList))
+            {
                 roleList.Clear();
                 s.Roles.ForEach(role => RoleList.Add(role));
-               
+
             }
-            else{
-            throw new KeyNotFoundException();
+            else
+            {
+                throw new KeyNotFoundException();
             }
         }
 
         private List<IRole> mockAddUserRole(IRole r, string user)
-         {
-            
-            if(userRoles.TryGetValue(user, out var RoleList)){
-                if(!RoleList.Contains(r)){
+        {
+
+            if (userRoles.TryGetValue(user, out var RoleList))
+            {
+                if (!RoleList.Contains(r))
+                {
                     RoleList.Add(r);
                 }
                 return RoleList;
             }
-            throw new KeyNotFoundException();
-           
+            else
+            {
+                throw new KeyNotFoundException();
+
+            }
+
         }
 
         private List<IRole> mockAddItemRole(IRole r, string item)
         {
-           
-            if(tymelineObjectRoles.TryGetValue(item, out var RoleList)){
-                if(!RoleList.Contains(r)){
-                RoleList.Add(r);
+
+            if (tymelineObjectRoles.TryGetValue(item, out var RoleList))
+            {
+                if (!RoleList.Contains(r))
+                {
+                    RoleList.Add(r);
                 }
                 return RoleList;
             }
+            else
+            {
+                throw new KeyNotFoundException();
 
-            throw new KeyNotFoundException();
-            
+            }
+
         }
 
 
         [SetUp]
         public void Setup()
         {
-            userdict = createUserDict();
+            
         }
 
-       
+
 
         private Dictionary<string, IUser> createUserDict()
         {
@@ -217,7 +252,7 @@ namespace Tymeline.API.Tests
         IUser MockChangePassword(IUser user, string password)
         {
             IUser oldUser = userdict.GetValueOrDefault(user.Email);
-            var newUser = oldUser.updatePassword(password);
+            var newUser = new User(oldUser.Email,oldUser.UserId,User.hashPassword(password));
             userdict.Remove(oldUser.Email);
             userdict.Add(newUser.Email, newUser);
             return newUser;
@@ -275,20 +310,22 @@ namespace Tymeline.API.Tests
 
 
         [Test]
-        
-        public void Test_GetUserRoles_For_Valid_Email_Expect_IUserRoles() {
-            IUser user =_authService.getUsers().RandomElement();
+
+        public void Test_GetUserRoles_For_Valid_Email_Expect_IUserRoles()
+        {
+            IUser user = _authService.getUsers().RandomElement();
             var roles = _rolesService.GetUserRoles(user.Email);
             roles.Email.Should().Be(user.Email);
             roles.Roles.Should().BeOfType<List<IRole>>();
         }
         [Test]
         [AutoData]
-        public void Test_GetUserRoles_For_Invalid_Email_Expect_Error(string email) {
-            
+        public void Test_GetUserRoles_For_Invalid_Email_Expect_Error(string email)
+        {
+
             Action act = () => _rolesService.GetUserRoles(email);
             act.Should().Throw<KeyNotFoundException>();
-         }
+        }
 
         [Test]
         public void Test_GetItemRoles_For_Valid_Item_Expect_ITymelineObjectRoles()
@@ -296,128 +333,145 @@ namespace Tymeline.API.Tests
 
         }
         [Test]
-        public void Test_GetItemRoles_For_Invalid_Item_Expect_Error() {
+        public void Test_GetItemRoles_For_Invalid_Item_Expect_Error()
+        {
             int item = TestUtil.RandomIntWithMax(100);
             Action act = () => _rolesService.GetItemRoles(tymelineList[item].Id);
-         }
+        }
 
         [Test]
-        public void Test_GetRoles_Expect_ListOfRoles() { 
+        public void Test_GetRoles_Expect_ListOfRoles()
+        {
             _rolesService.GetRoles().Should().BeOfType<List<IRole>>().And.NotBeEmpty();
         }
 
         [Test]
         [AutoData]
-        public void Test_SetUserRoles_For_Valid_Email_Expect_UserRoles_Set(List<Role> roles) {
-            IUser user =_authService.getUsers().RandomElement();
+        public void Test_SetUserRoles_For_Valid_Email_Expect_UserRoles_Set(List<Role> roles)
+        {
+            IUser user = _authService.getUsers().RandomElement();
             List<IRole> Iroles = roles.Select(s => (IRole)s).ToList();
-            IUserRoles userRole = new UserRoles(user.Email,Iroles);
+            IUserRoles userRole = new UserRoles(user.Email, Iroles);
             _rolesService.SetUserRoles(userRole);
             _rolesService.GetUserRoles(user.Email).Roles.Should().Contain(roles);
-         }
+        }
 
-        [Test,AutoData]
-        public void Test_SetUserRoles_For_Invalid_Email_Expect_Error(string FakeMail,List<Role> roles) { 
+        [Test, AutoData]
+        public void Test_SetUserRoles_For_Invalid_Email_Expect_Error(string FakeMail, List<Role> roles)
+        {
             List<IRole> Iroles = roles.Select(s => (IRole)s).ToList();
-            IUserRoles userRole = new UserRoles(FakeMail,Iroles);
+            IUserRoles userRole = new UserRoles(FakeMail, Iroles);
             Action act = () => _rolesService.SetUserRoles(userRole);
             act.Should().Throw<KeyNotFoundException>();
         }
 
-        [Test,AutoData]
-        public void Test_AddRole_Expect_Role_To_Be_Saved(Role role) {
+        [Test, AutoData]
+        public void Test_AddRole_Expect_Role_To_Be_Saved(Role role)
+        {
             Action act = () => _rolesService.AddRole(role);
             act.Should().NotThrow();
             _rolesService.GetRoles().Should().Contain(role);
-         }
+        }
         [Test]
-        public void Test_RemoveRole_Expect_Role_To_Be_Removed() { 
-            IRole role =  _rolesService.GetRoles().RandomElement();
+        public void Test_RemoveRole_Expect_Role_To_Be_Removed()
+        {
+            IRole role = _rolesService.GetRoles().RandomElement();
             _rolesService.RemoveRole(role);
             _rolesService.GetRoles().Should().NotContain(role);
         }
 
-        [Test,AutoData]
-        public void Test_AddUserRole_Impl1_For_Valid_Email_Expect_Role_In_Returned_List(Role role) {
-            IUser user =_authService.getUsers().RandomElement();
-            IUserRole userRole = new UserRole(user.Email,role);
+        [Test, AutoData]
+        public void Test_AddUserRole_Impl1_For_Valid_Email_Expect_Role_In_Returned_List(Role role)
+        {
+            IUser user = _authService.getUsers().RandomElement();
+            IUserRole userRole = new UserRole(user.Email, role);
             _rolesService.AddUserRole(userRole).Should().Contain(userRole.Role);
         }
 
-        [Test,AutoData]
-        public void Test_AddUserRole_Impl2_For_Valid_Email_Expect_Role_In_Returned_List(Role role) {
-            IUser user =_authService.getUsers().RandomElement();
-            _rolesService.AddUserRole(role,user.Email).Should().Contain(role);
-            
+        [Test, AutoData]
+        public void Test_AddUserRole_Impl2_For_Valid_Email_Expect_Role_In_Returned_List(Role role)
+        {
+            IUser user = _authService.getUsers().RandomElement();
+            _rolesService.AddUserRole(role, user.Email).Should().Contain(role);
+
         }
 
-        [Test,AutoData]
-        public void Test_AddUserRole_Impl1_For_Invalid_Email_Expect_Error(string Email,Role role) {
-            IUserRole userRole = new UserRole(Email,role);
+        [Test, AutoData]
+        public void Test_AddUserRole_Impl1_For_Invalid_Email_Expect_Error(string Email, Role role)
+        {
+            IUserRole userRole = new UserRole(Email, role);
             Action act = () => _rolesService.AddUserRole(userRole);
             act.Should().Throw<KeyNotFoundException>();
         }
 
-        [Test,AutoData]
-        public void Test_AddUserRole_Impl2_For_Invalid_Email_Expect_Error(string Email,Role role) { 
-            Action act = () => _rolesService.AddUserRole(role,Email);
+        [Test, AutoData]
+        public void Test_AddUserRole_Impl2_For_Invalid_Email_Expect_Error(string Email, Role role)
+        {
+            Action act = () => _rolesService.AddUserRole(role, Email);
             act.Should().Throw<KeyNotFoundException>();
         }
 
         [Test]
-        public void Test_RemoveUserRole_Impl1_For_Valid_Email_Expect_Role_Not_In_Returned_List() {
-            IUser user =_authService.getUsers().RandomElement();
+        public void Test_RemoveUserRole_Impl1_For_Valid_Email_Expect_Role_Not_In_Returned_List()
+        {
+            IUser user = _authService.getUsers().RandomElement();
             IUserRoles userRoles = _rolesService.GetUserRoles(user.Email);
             IRole role = userRoles.Roles.RandomElement();
-            IUserRole userRole = new UserRole(user.Email,role);
+            IUserRole userRole = new UserRole(user.Email, role);
 
             _rolesService.RemoveUserRole(userRole).Should().NotContain(role);
         }
         [Test]
-        public void Test_RemoveUserRole_Impl2_For_Valid_Email_Expect_Role_Not_In_Returned_List() {
-            IUser user =_authService.getUsers().RandomElement();
+        public void Test_RemoveUserRole_Impl2_For_Valid_Email_Expect_Role_Not_In_Returned_List()
+        {
+            IUser user = _authService.getUsers().RandomElement();
             IUserRoles userRoles = _rolesService.GetUserRoles(user.Email);
             IRole role = userRoles.Roles.RandomElement();
 
-            _rolesService.RemoveUserRole(role,user.Email).Should().NotContain(role);
-         }
-        [Test,AutoData]
-        public void Test_RemoveUserRole_Impl1_For_Invalid_Email_Expect_Error(string Email,Role role) {
-            IUser user =_authService.getUsers().RandomElement();
-            IUserRole userRole = new UserRole(Email,role);
-            Action act = () =>_rolesService.RemoveUserRole(userRole);
+            _rolesService.RemoveUserRole(role, user.Email).Should().NotContain(role);
+        }
+        [Test, AutoData]
+        public void Test_RemoveUserRole_Impl1_For_Invalid_Email_Expect_Error(string Email, Role role)
+        {
+            IUser user = _authService.getUsers().RandomElement();
+            IUserRole userRole = new UserRole(Email, role);
+            Action act = () => _rolesService.RemoveUserRole(userRole);
             act.Should().Throw<KeyNotFoundException>();
-         }
-        [Test,AutoData]
+        }
+        [Test, AutoData]
 
 
-        public void Test_RemoveUserRole_Impl2_For_Invalid_Email_Expect_Error(string Email,Role role) {
-            IUser user =_authService.getUsers().RandomElement();
-            Action act = () => _rolesService.RemoveUserRole(role,Email);
+        public void Test_RemoveUserRole_Impl2_For_Invalid_Email_Expect_Error(string Email, Role role)
+        {
+            IUser user = _authService.getUsers().RandomElement();
+            Action act = () => _rolesService.RemoveUserRole(role, Email);
             act.Should().Throw<KeyNotFoundException>();
-         }
+        }
 
 
 
 
         [Test]
-        public void TestGetUserRoles_For_Valid_Email_Expect_ValidIUserRoles() {
-            IUser user =_authService.getUsers().RandomElement();
+        public void TestGetUserRoles_For_Valid_Email_Expect_ValidIUserRoles()
+        {
+            IUser user = _authService.getUsers().RandomElement();
             _rolesService.GetUserRoles(user.Email).Roles.Should().BeOfType<List<IRole>>();
-            
+
         }
 
-        [Test,AutoData]
-        public void TestGetUserRoles_For_Invalid_Email_expect_Exception(string Email) {
+        [Test, AutoData]
+        public void TestGetUserRoles_For_Invalid_Email_expect_Exception(string Email)
+        {
             Action act = () => _rolesService.GetUserRoles(Email);
             act.Should().Throw<KeyNotFoundException>();
-         }
+        }
 
 
-        [Test,AutoData]
-        public void Test_SetUserRoles_For_Valid_Email_expect_Result_To_Contain_Set_List(List<Role> roles) {
-            IUser user =_authService.getUsers().RandomElement();
-            UserRoles userRoles = new UserRoles(user.Email,roles.Select(s => (IRole)s).ToList());
+        [Test, AutoData]
+        public void Test_SetUserRoles_For_Valid_Email_expect_Result_To_Contain_Set_List(List<Role> roles)
+        {
+            IUser user = _authService.getUsers().RandomElement();
+            UserRoles userRoles = new UserRoles(user.Email, roles.Select(s => (IRole)s).ToList());
             _rolesService.SetUserRoles(userRoles);
             _rolesService.GetUserRoles(userRoles.Email).Roles.Should().Contain(userRoles.Roles);
         }

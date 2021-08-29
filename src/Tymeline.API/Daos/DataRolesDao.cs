@@ -1,7 +1,16 @@
 using System.Collections.Generic;
+using MySql.Data.MySqlClient;
 
 public class DataRolesDao : IDataRolesDao
 {
+    public MySqlConnection sqlConnection { get; private set; }
+
+
+    public DataRolesDao(MySqlConnection connection){
+        sqlConnection = connection;
+    }
+
+
     public void AddRole(IRole role)
     {
         throw new System.NotImplementedException();

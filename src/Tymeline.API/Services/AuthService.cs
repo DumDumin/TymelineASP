@@ -36,20 +36,12 @@ public class AuthService : IAuthService
 
     public IUser Login(IUserCredentials credentials)
     {
-        try
+       
+        if (credentials.complete())
         {
-            if (credentials.complete())
-            {
-                return AuthDao.getUserByMail(credentials.Email).verifyPassword(credentials.Password);
-  
-            }
-            throw new ArgumentException();
-          }
-        catch (System.Exception)
-        {
-            throw new ArgumentException();
+            return AuthDao.getUserByMail(credentials.Email).verifyPassword(credentials.Password);
         }
-        
+        throw new ArgumentException();
     }
 
     public IUser Register(IUserCredentials credentials)

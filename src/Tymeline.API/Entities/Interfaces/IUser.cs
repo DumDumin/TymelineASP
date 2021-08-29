@@ -4,9 +4,9 @@ public interface IUser
     string Email {get; set;}
 
 
-    IUser updatePassword(string password);
+    
 
     IUser verifyPassword(string passwd);
-
+    DaoUser ToDaoUser();
 
 }

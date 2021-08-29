@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
@@ -68,12 +69,12 @@ namespace Tymeline.API.Tests
         }
 
         private TymelineObject mockCreateTymelineObject(TymelineObject tO){
-            tO.Id = new Guid().ToString();
+            tO.Id = Guid.NewGuid().ToString();
             return tO;
         }
 
 
-          [Test]
+        [Test]
         public async Task Test_TymelineCreate_With_New_Entry_Returns_New_Entry_And_201() {
             TymelineObject tymelineObject = new TymelineObject(189890,new Content("testContent"),10000000,false,false);
            
@@ -84,6 +85,23 @@ namespace Tymeline.API.Tests
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
             Assert.AreEqual(HttpStatusCode.Created,statusCode);
+        }
+
+
+         [Test]
+        public async Task Test_TymelineCreate_With_New_Entry_Returns_New_Entry_And_201_and_new_Id() {
+            TymelineObject tymelineObject = new TymelineObject(){Content=new Content("testContent"), Length=10000000, Start=10000,CanChangeLength= false,CanMove= false};
+            tymelineObject.Id.Should().BeNull();
+            JsonContent content =  JsonContent.Create(tymelineObject);
+
+
+            var response = await _client.PostAsync($"https://localhost:5001/tymeline/create",content);
+            var responseString = await response.Content.ReadAsStringAsync();
+            var parsedObject = JsonConvert.DeserializeObject<TymelineObject>(responseString);
+            var statusCode = response.StatusCode;
+            Assert.AreEqual(HttpStatusCode.Created,statusCode);
+            parsedObject.Id.Should().NotBeNull();
+
         }
 
     }

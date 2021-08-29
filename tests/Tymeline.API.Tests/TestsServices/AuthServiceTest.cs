@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AutoFixture.NUnit3;
+using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
 
 
 namespace Tymeline.API.Tests
-{
+{   
+    [Category("Service")]
     public class AuthServiceTest : OneTimeSetUpAttribute
     {
         IAuthService _authService;
@@ -24,6 +27,9 @@ namespace Tymeline.API.Tests
         {
             var _appSettingsOptions = Options.Create<AppSettings>(new AppSettings());
             _appSettings = _appSettingsOptions.Value;
+            
+            userdict = createUserDict();
+            
             _authDao = new Moq.Mock<IAuthDao>();
             _utilService = new UtilService();
             _rolesService = new Mock<IDataRolesService>();
@@ -33,7 +39,6 @@ namespace Tymeline.API.Tests
             _authDao.Setup(s => s.getUserByMail(It.IsAny<string>())).Returns((string mail) => MockGetUserByMail(mail));
             _authDao.Setup(s => s.GetUsers()).Returns(() => MockGetUser());
             _authDao.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials user) => MockRegister(user));
-            _authDao.Setup(s => s.GetUserPermissions(It.IsAny<IUser>())).Returns((IUser user) => GetUserPermissions(user));
             _authDao.Setup(s => s.RemoveUser(It.IsAny<IUser>())).Callback((IUser user) => MockRemoveUser(user));
             _authDao.Setup(s => s.ChangePassword(It.IsAny<IUser>(),It.IsAny<string>())).Returns((IUser user, string password) => MockChangePassword(user,password));
         }
@@ -41,12 +46,13 @@ namespace Tymeline.API.Tests
 
         [SetUp]
         public void Setup(){
-         userdict = createUserDict();
+         
         }
 
         IUser MockChangePassword(IUser user, string password){
             IUser oldUser = userdict.GetValueOrDefault(user.Email);
-            var newUser = oldUser.updatePassword(password);
+            
+            var newUser = new User(oldUser.Email,oldUser.UserId,User.hashPassword(password));
             userdict.Remove(oldUser.Email);
             userdict.Add(newUser.Email,newUser);
             return newUser;
@@ -69,8 +75,9 @@ namespace Tymeline.API.Tests
                 throw new ArgumentException();
             }
             else{
-                userdict.Add(user.Email, User.CredentialsToUser(user));
-                return User.CredentialsToUser(user);
+                var credentialedUser=User.CredentialsToUser(user);
+                userdict.Add(user.Email, credentialedUser);
+                return credentialedUser;
             }
         }
 
@@ -86,8 +93,7 @@ namespace Tymeline.API.Tests
         IUser MockGetUserByMail(string mail){
             
             IUser user;
-            userdict.TryGetValue(mail,out user);
-            if (user != null){
+            if(userdict.TryGetValue(mail,out user)){
                 return user;
             }
             throw new ArgumentException();
@@ -129,9 +135,9 @@ namespace Tymeline.API.Tests
         }
 
     
-        [Test]
-        public void Test_Register_Given_Valid_Credentials_Expect_IUser(){
-            string mail = "test105@email.de";
+        [Test,AutoData]
+        public void Test_Register_Given_Valid_Credentials_Expect_IUser(string emailPrefix){
+            string mail = $"{emailPrefix}@email.de";
             IUserCredentials credentials = new UserCredentials(mail,"hunter13");
             IUser user =_authService.Register(credentials);
             Assert.NotNull(user);
@@ -140,30 +146,29 @@ namespace Tymeline.API.Tests
 
 
 
-        [Test]
-        public void Test_Register_Given_Valid_Credentials_Expect_Login_To_Succeed(){
-            string mail = "test105@email.de";
-            string passwd = "hunter13";
-            IUserCredentials credentials = new UserCredentials(mail,passwd);
-            IUserCredentials creds = new UserCredentials(mail,passwd);
+        [Test,AutoData]
+        public void Test_Register_Given_Valid_Credentials_Expect_Login_To_Succeed(string password){
+            string mail= "thisisatestemail@email.de";
+            IUserCredentials credentials = new UserCredentials(mail,password);
             _authService.Register(credentials);
-            IUser user =_authService.Login(creds);
+            IUser user =_authService.Login(credentials);
             Assert.NotNull(user);
             Assert.AreEqual(user.Email,mail);
         }
 
 
-        [Test]
-        public void Test_Register_Given_Invalid_Credentials_Expect_NullUser(){
-            string mail = "test105email.de";
+        [Test,AutoData]
+        public void Test_Register_Given_Invalid_Credentials_Expect_NullUser(string email){
+            // WHAT ARE INVALID CREDENTIALS?!?!
+            string mail = email;
             IUserCredentials credentials = new UserCredentials(mail,"hunter13");
             Assert.Throws<ArgumentException>(() => _authService.Register(credentials));
         }
 
         [Test]
         public void Test_Register_Given_Already_Registered_Credentials_Expect_ArgumentException(){
-            string mail = "test5@email.de";
-            IUserCredentials credentials = new UserCredentials(mail,"hunter13");
+            var randomElement = _authService.getUsers().RandomElement();
+            IUserCredentials credentials = new UserCredentials(randomElement.Email,"hunter13");
             
             Assert.Throws<ArgumentException>(() => _authService.Register(credentials));
             
@@ -171,7 +176,7 @@ namespace Tymeline.API.Tests
 
 
         [Test]
-        public void Test_Remove_Account_Expect_ArgumentException(){
+        public void Test_Remove_Account_Expect_Account_To_Throw_Error_On_Retrival(){
             string mail = "test5@email.de";
             string passwd ="hunter13";
             IUserCredentials creds = new UserCredentials(mail,passwd);
@@ -182,14 +187,17 @@ namespace Tymeline.API.Tests
 
 
         [Test]
-        public void Test_Remove_Account_Twice_Expect_ArgumentException(){
+        public void Test_Remove_Account__Expect_No_Error_From_Removing(){
             string mail = "test5@email.de";
             string passwd ="hunter13";
             IUserCredentials creds = new UserCredentials(mail,passwd);
             var user = User.CredentialsToUser(creds);
-            _authService.RemoveUser(user);
-            _authService.RemoveUser(user);
-           Assert.Throws<ArgumentException>(() => _authService.GetByMail(user.Email));
+            Action act = () =>_authService.RemoveUser(user);
+            Action act2 = () =>_authService.RemoveUser(user);
+            act.Should().NotThrow();
+            act2.Should().NotThrow();
+            Action getByMail = () => _authService.GetByMail(user.Email);
+            getByMail.Should().Throw<ArgumentException>();
         }
 
         [Test]
@@ -206,11 +214,12 @@ namespace Tymeline.API.Tests
         }
 
 
-          [Test]
-        public void Test_Change_Password_Expect_UserPasswordChangeIdempotency(){
+          [Test,AutoData]
+        public void Test_Change_Password_Expect_UserPasswordChangeIdempotency(string mailPrefix){
             // the old User is still valid after it has been changed.
             // important for groups. Users shoudlnt be affected negativly by this behaviour
-            string mail = "test105@email.de";
+            
+            string mail = $"{mailPrefix}@email.de";
             string passwd = "hunter13";
             IUserCredentials credentials = new UserCredentials(mail,passwd);
             IUser user = _authService.Register(credentials);

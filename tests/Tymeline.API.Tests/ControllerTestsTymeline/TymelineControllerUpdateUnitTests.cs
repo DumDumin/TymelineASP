@@ -65,9 +65,9 @@ private WebApplicationFactory<Startup> _factory;
 
         [Test]
         public async Task Test_TymelineUpdate_With_New_Entry_Returns_New_Entry_And_201() {
-            TymelineObject tymelineObject = new TymelineObject("1",189890,new Content("testContent"),10000000,false,false);
+            TymelineObject tymelineObject = new TymelineObject("999",189890,new Content("testContent"),10000000,false,false);
             var obj = new IUpdateTymelineObject();
-            obj.Id = "1";
+            obj.Id = "999";
             obj.tymelineObject = tymelineObject;
             var content = JsonContent.Create(obj);
         

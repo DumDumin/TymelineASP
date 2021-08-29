@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 
 public interface IAuthDao{
-    IUser Register(IUserCredentials user);
-
-    IEnumerable<string> GetUserPermissions(IUser user);
+    IUser Register(IUserCredentials credentials);
+    
+    // IEnumerable<string> GetUserPermissions(IUser user);
 
     List<IUser> GetUsers();
 
@@ -13,6 +13,8 @@ public interface IAuthDao{
     void RemoveUser(IUser user);
 
     IUser ChangePassword(IUser user, string password);
+
+
     
 
 }

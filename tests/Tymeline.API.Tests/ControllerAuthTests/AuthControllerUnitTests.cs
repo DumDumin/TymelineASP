@@ -41,7 +41,7 @@ namespace Tymeline.API.Tests
             _dataRolesService = new Mock<IDataRolesService>();
             _utilService = new UtilService();
 
-
+            userdict = createUserDict();
             _client = _factory.WithWebHostBuilder(builder =>
             {
                 builder.ConfigureTestServices(services => 
@@ -62,7 +62,7 @@ namespace Tymeline.API.Tests
         [SetUp]
         public void Setup()
         {
-           userdict = createUserDict();
+           
         }
 
         private IUserRoles mockGetUserPermissions(string email){
