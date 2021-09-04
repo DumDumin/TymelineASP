@@ -15,16 +15,16 @@ public interface IDataRolesService
     void AddRole(IRole role);
     
     void RemoveRole(IRole role);
-    List<IRole> AddUserRole(IUserRole userRole);
-    List<IRole> AddUserRole(IRole role,string email);
-    List<IRole> RemoveUserRole(IRole role,string email);
-     List<IRole> RemoveUserRole(IUserRole userRole);
+    IUserRoles AddUserRole(IUserRole userRole);
+    IUserRoles AddUserRole(IRole role,string email);
+    IUserRoles RemoveUserRole(IRole role,string email);
+    IUserRoles RemoveUserRole(IUserRole userRole);
     // add methods for mapping roles to items
 
-    List<IRole> AddRoleToItem(IRole role, string toId);
+    ITymelineObjectRoles AddRoleToItem(IRole role, string toId);
     // void AddRoleToItems(IRole role, IEnumerable<TymelineObject> tos);
     // does this make sense?
-    List<IRole> RemoveRoleFromItem(IRole role, string toId);
+    ITymelineObjectRoles RemoveRoleFromItem(IRole role, string toId);
     // void RemoveRoleFromItems(IRole role, IEnumerable<TymelineObject> tos);
     // does this make sense?
 

@@ -69,7 +69,7 @@ namespace Tymeline.API.Tests
             catch (System.Exception)
             {
                 
-                throw new KeyNotFoundException();
+                throw new ArgumentException();
             }
         }
 
@@ -86,6 +86,8 @@ namespace Tymeline.API.Tests
             tymelineList.Remove(element);
             }
         }
+
+
         List<TymelineObject> mockDaoGetByTime(int start,int end){
             var s = tymelineList.Where(element => start<element.Start+element.Length && start>element.Start+element.Length).ToList();
             s.AddRange(tymelineList.Where(element => start<element.Start && element.Start<end).ToList());
@@ -103,7 +105,7 @@ namespace Tymeline.API.Tests
 
         [Test,AutoData]
         public void TestGetById_With_Not_Existing_Element_Expect_Exceptions(string key){
-            Assert.Throws<KeyNotFoundException>(()=> _timelineService.GetById(key));
+            Assert.Throws<ArgumentException>(()=> _timelineService.GetById(key));
         }
 
 
@@ -121,7 +123,7 @@ namespace Tymeline.API.Tests
         [Test]
         public void Test_DeleteById_Expect_Item_to_be_Deleted(){
             _timelineService.DeleteById("2");
-            Assert.Throws<KeyNotFoundException>(()=> _timelineService.GetById("2"));
+            Assert.Throws<ArgumentException>(()=> _timelineService.GetById("2"));
         }
 
 

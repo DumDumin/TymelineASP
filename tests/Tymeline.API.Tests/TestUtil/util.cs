@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AutoFixture;
+using AutoFixture.Kernel;
 using MySql.Data.MySqlClient;
 
 public class TestUtil
@@ -157,44 +159,37 @@ public class TestUtil
     }
 
 
-    public static void prepopulateTymelineObjects(MySqlConnection connection){
+    public static List<TymelineObject> prepopulateTymelineObjects(MySqlConnection connection){
             try
             {
+            Fixture fix = new Fixture();
+            List<TymelineObject> items = fix.CreateMany<TymelineObject>(50).ToList();
             connection.Open();
+         
+            var command = "insert into Content values (@id,@text)";
+            var commandtymeline = @"insert into TymelineObjects (id, canChangeLength, canMove, start, length, ContentId) 
+            values(@id,@canChangeLength,@canMove,@start,@length,@guid);";
+            items.ForEach(item => {
+            MySqlCommand cmd  =  new MySqlCommand();
+            cmd.Connection=connection;
+            cmd.CommandText=commandtymeline;
+            cmd.Parameters.AddWithValue("@id",item.Id);
+            cmd.Parameters.AddWithValue("@canChangeLength",item.CanChangeLength);
+            cmd.Parameters.AddWithValue("@canMove",item.CanMove);
+            cmd.Parameters.AddWithValue("@start",item.Start);
+            cmd.Parameters.AddWithValue("@length",item.Length);
+            cmd.Parameters.AddWithValue("@guid",item.Content.GetHashCode().ToString());
 
-            var command = new MySqlCommand("insert into Content values (@id,@text)",connection);
-            var commandtymeline = new MySqlCommand("insert into TymelineObjects (id, canChangeLength, canMove, start, length, ContentId) values(@id,true,false,FLOOR(RAND()*10000),FLOOR(RAND()*1000000),@guid); ",connection);
-            var initialContentId = Guid.NewGuid().ToString();
-            var initialTymelineId= Guid.NewGuid().ToString();
+            cmd.ExecuteNonQuery();
+            cmd.Parameters.Clear();
+            cmd.CommandText = command;
 
-
-          
-
-            commandtymeline.Parameters.AddWithValue("@id",initialTymelineId);
-            commandtymeline.Parameters.AddWithValue("@guid",initialContentId);
-
-            commandtymeline.ExecuteNonQuery();
-
-
-            command.Parameters.AddWithValue("@id",initialContentId);
-            command.Parameters.AddWithValue("@text",TestUtil.RandomString(50)); 
-            command.ExecuteNonQuery();
-
-
-            for (int i = 0; i < 50; i++)
-            {
-                var idContent = Guid.NewGuid().ToString();
-                var idTymeline = Guid.NewGuid().ToString();
-                commandtymeline.Parameters.Clear();
-                command.Parameters.Clear();
-                commandtymeline.Parameters.AddWithValue("@id",idTymeline);
-                commandtymeline.Parameters.AddWithValue("@guid",idContent);
-                commandtymeline.ExecuteNonQuery();
-                command.Parameters.AddWithValue("@id",idContent);
-                command.Parameters.AddWithValue("@text",TestUtil.RandomString(50));
-                command.ExecuteNonQuery();
-                
-            }
+            cmd.Parameters.AddWithValue("@id",item.Content.GetHashCode().ToString());
+            cmd.Parameters.AddWithValue("@text",item.Content.Text); 
+            cmd.ExecuteNonQuery();
+            
+            });
+            return items;
        
             }
             catch (System.Exception)
@@ -204,5 +199,89 @@ public class TestUtil
             finally{
                 connection.Close();
             }
+        }
+
+
+
+         public static  List<IRole> prepopulateRoles(MySqlConnection connection){
+            Fixture fix = new Fixture();
+            fix.Customizations.Add(
+                new TypeRelay(
+                    typeof(IRole),
+                    typeof(Role)));
+                    ;
+            List<IRole> expectRole = fix.CreateMany<IRole>(50).ToList();
+            expectRole.ForEach(role => {
+                connection.Open();
+                var command = connection.CreateCommand();
+                command.CommandText = "INSERT into Roles(role_id,role_name,role_value) values(@role_id,@role_name,@role_value)";
+
+                command.Parameters.AddWithValue("@role_id",role.RoleId);
+                command.Parameters.AddWithValue("@role_name",role.Type);
+                command.Parameters.AddWithValue("@role_value",role.Value);
+                command.ExecuteNonQuery();
+                connection.Close();
+            });
+            return expectRole;
+        }
+
+
+        public static List<IUserCredentials> prepopulateUser(MySqlConnection connection){
+            Fixture fix = new Fixture();
+             fix.Customizations.Add(
+                new TypeRelay(
+                    typeof(IUserCredentials),
+                    typeof(UserCredentials)));
+                    ;
+            List<IUserCredentials> expectedUsercreds = fix.CreateMany<IUserCredentials>(50).ToList();
+            expectedUsercreds.ForEach(creds => {
+                connection.Open();
+                creds.Password = "asdf1234";
+                var command = connection.CreateCommand();
+                var user = User.CredentialsToUser(creds).ToDaoUser();
+                command.CommandText = "INSERT into Users(user_id,email,password) values(@user_id,@email,@password)";
+
+                command.Parameters.AddWithValue("@user_id",user.user_id);
+                command.Parameters.AddWithValue("@email",user.email);
+                command.Parameters.AddWithValue("@password",user.password);
+                command.ExecuteNonQuery();
+                connection.Close();
+            });
+            return expectedUsercreds;
+        }
+
+
+        public static void prepopulateUserRoles(MySqlConnection connection, List<IRole> roles, List<IUserCredentials> credentials){
+
+            connection.Open();
+            credentials.ForEach(creds => {
+                var user = User.CredentialsToUser(creds).ToDaoUser();
+                var userRoles = roles.RandomElements(3);
+                userRoles.ForEach(role => {
+                    var command = new MySqlCommand();
+                    command.Connection = connection;
+                    command.CommandText = "INSERT into UserRoleRelation(user_fk,role_fk) values(@user_fk,@role_fk)";
+                    command.Parameters.AddWithValue("@user_fk",user.user_id);
+                    command.Parameters.AddWithValue("@role_fk",role.RoleId);
+                    command.ExecuteNonQuery();
+                });
+            });
+            connection.Close();
+        }
+        public static void prepopulateItemRoles(MySqlConnection connection, List<IRole> roles, List<TymelineObject> items){
+
+            connection.Open();
+            items.ForEach(item => {
+                var userRoles = roles.RandomElements(3);
+                userRoles.ForEach(role => {
+                    var command = new MySqlCommand();
+                    command.Connection = connection;
+                    command.CommandText = "INSERT into ItemRoleRelation(item_fk,role_fk) values(@item_fk,@role_fk)";
+                    command.Parameters.AddWithValue("@item_fk",item.Id);
+                    command.Parameters.AddWithValue("@role_fk",role.RoleId);
+                    command.ExecuteNonQuery();
+                });
+            });
+            connection.Close();
         }
 }

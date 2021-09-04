@@ -27,8 +27,9 @@ public class TymelineService : ITymelineService{
             }
             throw new ArgumentException();
         }
-        catch(KeyNotFoundException){
-            return _tymelineObjectDao.Create(tymelineObject);
+       
+         catch(System.Exception){
+            throw new ArgumentException();
         }
     }
     public void DeleteById(string id){

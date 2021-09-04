@@ -19,8 +19,8 @@ public class Role : IRole
         {
             return false;
         }
-        
-        return this.Type.Equals(((Role)obj).Type)&&this.Value.Equals(((Role)obj).Value);
+        return this.GetHashCode().Equals(obj.GetHashCode());
+        // return this.Type.Equals(((Role)obj).Type)&&this.Value.Equals(((Role)obj).Value);
     }
 
     public override int GetHashCode()

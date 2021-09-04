@@ -71,9 +71,9 @@ namespace Tymeline.API.Tests
         }
         [Test]
         [Category("Sql")]
-        public void Test_Get_Not_Existing_Id_Expect_KeyNotFoundException(){
+        public void Test_Get_Not_Existing_Id_Expect_ArgumentException(){
 
-            Assert.Throws<KeyNotFoundException>(() => _timelineObjectDao.getById("3123"));
+            Assert.Throws<ArgumentException>(() => _timelineObjectDao.getById("3123"));
         }
 
 
@@ -158,7 +158,7 @@ namespace Tymeline.API.Tests
             
             _timelineObjectDao.DeleteById(realId);
             Action act = () => _timelineObjectDao.getById(realId);
-            act.Should().Throw<KeyNotFoundException>();
+            act.Should().Throw<ArgumentException>();
         }
 
 
@@ -172,7 +172,7 @@ namespace Tymeline.API.Tests
             Action actdelete = () => _timelineObjectDao.DeleteById(realId);
             actdelete.Should().NotThrow();
             Action act = () => _timelineObjectDao.getById(realId);
-            act.Should().Throw<KeyNotFoundException>();
+            act.Should().Throw<ArgumentException>();
         }
 
 

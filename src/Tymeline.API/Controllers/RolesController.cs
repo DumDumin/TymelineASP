@@ -114,8 +114,8 @@ namespace Tymeline.API.Controllers
 
             try
             {
-                List<IRole> newRoles = _dataRolesService.AddRoleToItem(roleIncrement.Role, roleIncrement.tymelineObjectId);
-                return StatusCode(200, new HttpTymelineObjectRoles { Roles = newRoles.ConvertAll(o => (Role)o), tymelineObjectId = roleIncrement.tymelineObjectId });
+                ITymelineObjectRoles newRoles = _dataRolesService.AddRoleToItem(roleIncrement.Role, roleIncrement.tymelineObjectId);
+                return StatusCode(200, new HttpTymelineObjectRoles { Roles = newRoles.Roles.ConvertAll(o => (Role)o), tymelineObjectId = roleIncrement.tymelineObjectId });
             }
             catch (System.Exception)
             {
@@ -130,8 +130,8 @@ namespace Tymeline.API.Controllers
         {
             try
             {
-                List<IRole> newRoles = _dataRolesService.RemoveRoleFromItem(roleIncrement.Role, roleIncrement.tymelineObjectId);
-                return StatusCode(200, new HttpTymelineObjectRoles { Roles = newRoles.ConvertAll(o => (Role)o), tymelineObjectId = roleIncrement.tymelineObjectId });
+                ITymelineObjectRoles newRoles = _dataRolesService.RemoveRoleFromItem(roleIncrement.Role, roleIncrement.tymelineObjectId);
+                return StatusCode(200, new HttpTymelineObjectRoles { Roles = newRoles.Roles.ConvertAll(o => (Role)o), tymelineObjectId = roleIncrement.tymelineObjectId });
             }
             catch (System.Exception)
             {
@@ -147,9 +147,9 @@ namespace Tymeline.API.Controllers
         {
             try
             {
-                List<IRole> roles = _dataRolesService.AddUserRole(userPermission.ToIUserRole());
+                IUserRoles roles = _dataRolesService.AddUserRole(userPermission.ToIUserRole());
                 _JwtService.constructJWTHeaders(Response, User.Identity.Name);
-                return StatusCode(200, roles.ConvertAll(o => (Role)o));
+                return StatusCode(200, roles.Roles.ConvertAll(o => (Role)o));
             }
             catch (System.Exception)
             {
@@ -165,9 +165,9 @@ namespace Tymeline.API.Controllers
         {
             try
             {
-                List<IRole> roles = _dataRolesService.RemoveUserRole(userPermission.ToIUserRole());
+                IUserRoles roles = _dataRolesService.RemoveUserRole(userPermission.ToIUserRole());
                 _JwtService.constructJWTHeaders(Response, User.Identity.Name);
-                return StatusCode(200, roles.ConvertAll(o => (Role)o));
+                return StatusCode(200, roles.Roles.ConvertAll(o => (Role)o));
             }
             catch (System.Exception)
             {

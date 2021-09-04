@@ -56,11 +56,11 @@ namespace Tymeline.API.Controllers
             }
             catch (ArgumentException)
             {
-                return  StatusCode(500);
+                return  StatusCode(204,null);
             }
-            catch(KeyNotFoundException)
+            catch(System.Exception)
             {
-                return StatusCode(204, null);
+                return StatusCode(500);
             }
             
         }

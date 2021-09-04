@@ -47,4 +47,7 @@ Update Content c Inner Join TymelineObjects t ON (c.id=t.contentId)
                 t.canChangeLength=false,
                 t.canMove=true
                 where t.id=
-                "
+                "";
+
+
+select Roles.role_id,Roles.role_name,Roles.role_value from Roles join UserRoleRelation ur on Roles.role_id=ur.role_fk join Users u on ur.user_fk=u.user_id where u.user_id="b6729fe89c8d88084b32d50b59240e4b" 

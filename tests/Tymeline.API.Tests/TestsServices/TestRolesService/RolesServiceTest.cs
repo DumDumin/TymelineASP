@@ -88,7 +88,7 @@ namespace Tymeline.API.Tests
             }
         }
 
-        private List<IRole> mockRemoveUserRole(IRole r, string s)
+        private IUserRoles mockRemoveUserRole(IRole r, string s)
         {
 
 
@@ -96,27 +96,28 @@ namespace Tymeline.API.Tests
             {
 
                 RoleList.Remove(r);
-                return RoleList;
+                
+                return new UserRoles(s,RoleList);
             }
             else
             {
-                throw new KeyNotFoundException();
+                throw new ArgumentException();
             }
 
         }
 
-        private List<IRole> mockRemoveRoleFromItem(IRole r, string i)
+        private ITymelineObjectRoles mockRemoveRoleFromItem(IRole r, string i)
         {
 
             if (tymelineObjectRoles.TryGetValue(i, out var RoleList))
             {
                 RoleList.Remove(r);
-                return RoleList;
+                return new TymelineObjectRoles(i,RoleList);
 
             }
             else
             {
-                throw new KeyNotFoundException();
+                throw new ArgumentException();
 
             }
         }
@@ -145,7 +146,7 @@ namespace Tymeline.API.Tests
             }
             else
             {
-                throw new KeyNotFoundException();
+                throw new ArgumentException();
 
             }
 
@@ -162,7 +163,7 @@ namespace Tymeline.API.Tests
             }
             else
             {
-                throw new KeyNotFoundException();
+                throw new ArgumentException();
 
             }
 
@@ -186,11 +187,11 @@ namespace Tymeline.API.Tests
             }
             else
             {
-                throw new KeyNotFoundException();
+                throw new ArgumentException();
             }
         }
 
-        private List<IRole> mockAddUserRole(IRole r, string user)
+        private IUserRoles mockAddUserRole(IRole r, string user)
         {
 
             if (userRoles.TryGetValue(user, out var RoleList))
@@ -199,17 +200,17 @@ namespace Tymeline.API.Tests
                 {
                     RoleList.Add(r);
                 }
-                return RoleList;
+                return new UserRoles(user,RoleList);
             }
             else
             {
-                throw new KeyNotFoundException();
+                throw new ArgumentException();
 
             }
 
         }
 
-        private List<IRole> mockAddItemRole(IRole r, string item)
+        private ITymelineObjectRoles mockAddItemRole(IRole r, string item)
         {
 
             if (tymelineObjectRoles.TryGetValue(item, out var RoleList))
@@ -218,11 +219,11 @@ namespace Tymeline.API.Tests
                 {
                     RoleList.Add(r);
                 }
-                return RoleList;
+                return new TymelineObjectRoles(item,RoleList);
             }
             else
             {
-                throw new KeyNotFoundException();
+                throw new ArgumentException();
 
             }
 
@@ -324,7 +325,7 @@ namespace Tymeline.API.Tests
         {
 
             Action act = () => _rolesService.GetUserRoles(email);
-            act.Should().Throw<KeyNotFoundException>();
+            act.Should().Throw<ArgumentException>();
         }
 
         [Test]
@@ -362,7 +363,7 @@ namespace Tymeline.API.Tests
             List<IRole> Iroles = roles.Select(s => (IRole)s).ToList();
             IUserRoles userRole = new UserRoles(FakeMail, Iroles);
             Action act = () => _rolesService.SetUserRoles(userRole);
-            act.Should().Throw<KeyNotFoundException>();
+            act.Should().Throw<ArgumentException>();
         }
 
         [Test, AutoData]
@@ -385,14 +386,14 @@ namespace Tymeline.API.Tests
         {
             IUser user = _authService.getUsers().RandomElement();
             IUserRole userRole = new UserRole(user.Email, role);
-            _rolesService.AddUserRole(userRole).Should().Contain(userRole.Role);
+            _rolesService.AddUserRole(userRole).Roles.Should().Contain(userRole.Role);
         }
 
         [Test, AutoData]
         public void Test_AddUserRole_Impl2_For_Valid_Email_Expect_Role_In_Returned_List(Role role)
         {
             IUser user = _authService.getUsers().RandomElement();
-            _rolesService.AddUserRole(role, user.Email).Should().Contain(role);
+            _rolesService.AddUserRole(role, user.Email).Roles.Should().Contain(role);
 
         }
 
@@ -401,14 +402,14 @@ namespace Tymeline.API.Tests
         {
             IUserRole userRole = new UserRole(Email, role);
             Action act = () => _rolesService.AddUserRole(userRole);
-            act.Should().Throw<KeyNotFoundException>();
+            act.Should().Throw<ArgumentException>();
         }
 
         [Test, AutoData]
         public void Test_AddUserRole_Impl2_For_Invalid_Email_Expect_Error(string Email, Role role)
         {
             Action act = () => _rolesService.AddUserRole(role, Email);
-            act.Should().Throw<KeyNotFoundException>();
+            act.Should().Throw<ArgumentException>();
         }
 
         [Test]
@@ -419,7 +420,7 @@ namespace Tymeline.API.Tests
             IRole role = userRoles.Roles.RandomElement();
             IUserRole userRole = new UserRole(user.Email, role);
 
-            _rolesService.RemoveUserRole(userRole).Should().NotContain(role);
+            _rolesService.RemoveUserRole(userRole).Roles.Should().NotContain(role);
         }
         [Test]
         public void Test_RemoveUserRole_Impl2_For_Valid_Email_Expect_Role_Not_In_Returned_List()
@@ -428,7 +429,7 @@ namespace Tymeline.API.Tests
             IUserRoles userRoles = _rolesService.GetUserRoles(user.Email);
             IRole role = userRoles.Roles.RandomElement();
 
-            _rolesService.RemoveUserRole(role, user.Email).Should().NotContain(role);
+            _rolesService.RemoveUserRole(role, user.Email).Roles.Should().NotContain(role);
         }
         [Test, AutoData]
         public void Test_RemoveUserRole_Impl1_For_Invalid_Email_Expect_Error(string Email, Role role)
@@ -436,7 +437,7 @@ namespace Tymeline.API.Tests
             IUser user = _authService.getUsers().RandomElement();
             IUserRole userRole = new UserRole(Email, role);
             Action act = () => _rolesService.RemoveUserRole(userRole);
-            act.Should().Throw<KeyNotFoundException>();
+            act.Should().Throw<ArgumentException>();
         }
         [Test, AutoData]
 
@@ -445,7 +446,7 @@ namespace Tymeline.API.Tests
         {
             IUser user = _authService.getUsers().RandomElement();
             Action act = () => _rolesService.RemoveUserRole(role, Email);
-            act.Should().Throw<KeyNotFoundException>();
+            act.Should().Throw<ArgumentException>();
         }
 
 
@@ -463,7 +464,7 @@ namespace Tymeline.API.Tests
         public void TestGetUserRoles_For_Invalid_Email_expect_Exception(string Email)
         {
             Action act = () => _rolesService.GetUserRoles(Email);
-            act.Should().Throw<KeyNotFoundException>();
+            act.Should().Throw<ArgumentException>();
         }
 
 

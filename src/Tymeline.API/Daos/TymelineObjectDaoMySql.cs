@@ -97,13 +97,13 @@ namespace Tymeline.API.Daos
 
                 if (tymelineObject == null)
                 {
-                    throw new KeyNotFoundException();
+                    throw new ArgumentException();
                 }
 
             }
             catch (Exception)
             {
-                throw new KeyNotFoundException();
+                throw new ArgumentException();
             }
             finally
             {

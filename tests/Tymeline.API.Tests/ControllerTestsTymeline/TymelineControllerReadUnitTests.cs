@@ -80,9 +80,9 @@ namespace Tymeline.API.Tests
                 case 1:
                     return results[0];
                 case 0:
-                    throw new KeyNotFoundException("key does not exist in the result"); 
+                    throw new ArgumentException("key does not exist in the result"); 
                 default:
-                    throw new ArgumentException("there can only ever be one result with any given id");
+                    throw new ArgumentException("doesnt make sense!");
             }
         }
     
@@ -130,7 +130,7 @@ namespace Tymeline.API.Tests
         {
             string key = "99";
 
-            _tymelineService.Setup(s => s.GetById(key)).Throws(new KeyNotFoundException());
+            _tymelineService.Setup(s => s.GetById(key)).Throws(new ArgumentException());
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
@@ -144,7 +144,7 @@ namespace Tymeline.API.Tests
             
             string key = "99";
             
-            _tymelineService.Setup(s => s.GetById(key)).Throws(new ArgumentException());
+            _tymelineService.Setup(s => s.GetById(key)).Throws(new KeyNotFoundException());
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;

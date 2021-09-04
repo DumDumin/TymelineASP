@@ -17,7 +17,7 @@ public class DataRolesService : IDataRolesService
     }
 
 
-    public List<IRole> AddRoleToItem(IRole role, string toId)
+    public ITymelineObjectRoles AddRoleToItem(IRole role, string toId)
     {
         return _rolesDao.AddRoleToItem(role,toId);
     }
@@ -25,13 +25,13 @@ public class DataRolesService : IDataRolesService
 
 
 
-    public List<IRole> AddUserRole(IRole role,string email)
+    public IUserRoles AddUserRole(IRole role,string email)
     {
         return _rolesDao.AddUserRole(role,email);
         
     }
 
-    public List<IRole> AddUserRole(IUserRole userRole)
+    public IUserRoles AddUserRole(IUserRole userRole)
     {
         return _rolesDao.AddUserRole(userRole.Role,userRole.Email);
     }
@@ -56,17 +56,17 @@ public class DataRolesService : IDataRolesService
         _rolesDao.RemoveRole(role);
     }
 
-    public List<IRole> RemoveRoleFromItem(IRole role, string toId)
+    public ITymelineObjectRoles RemoveRoleFromItem(IRole role, string toId)
     {
         return _rolesDao.RemoveRoleFromItem(role,toId);
     }
 
-    public List<IRole> RemoveUserRole(IRole role,string email)
+    public IUserRoles RemoveUserRole(IRole role,string email)
     {
         return _rolesDao.RemoveUserRole(role,email);
     }
 
-    public List<IRole> RemoveUserRole(IUserRole userRole)
+    public IUserRoles RemoveUserRole(IUserRole userRole)
     {
         return _rolesDao.RemoveUserRole(userRole.Role,userRole.Email);
     }

@@ -52,9 +52,9 @@ namespace Tymeline.API.Tests
             TestUtil.prepopulateTymelineObjects(mySqlConnection);
 
 
-            var roles = prepopulateRoles(mySqlConnection);
-            var users = prepopulateUser(mySqlConnection);
-            prepopulateUserRoles(mySqlConnection,roles,users);
+            var roles = TestUtil.prepopulateRoles(mySqlConnection);
+            var users = TestUtil.prepopulateUser(mySqlConnection);
+            TestUtil.prepopulateUserRoles(mySqlConnection,roles,users);
         }
 
 
@@ -62,71 +62,7 @@ namespace Tymeline.API.Tests
             TestUtil.setupDB(connection);
         }
 
-        private  List<IRole> prepopulateRoles(MySqlConnection connection){
-            Fixture fix = new Fixture();
-            fix.Customizations.Add(
-                new TypeRelay(
-                    typeof(IRole),
-                    typeof(Role)));
-                    ;
-            List<IRole> expectRole = fix.CreateMany<IRole>(50).ToList();
-            expectRole.ForEach(role => {
-                connection.Open();
-                var command = connection.CreateCommand();
-                command.CommandText = "INSERT into Roles(role_id,role_name,role_value) values(@role_id,@role_name,@role_value)";
 
-                command.Parameters.AddWithValue("@role_id",role.RoleId);
-                command.Parameters.AddWithValue("@role_name",role.Type);
-                command.Parameters.AddWithValue("@role_value",role.Value);
-                command.ExecuteNonQuery();
-                connection.Close();
-            });
-            return expectRole;
-        }
-
-
-        private List<IUserCredentials> prepopulateUser(MySqlConnection connection){
-            Fixture fix = new Fixture();
-             fix.Customizations.Add(
-                new TypeRelay(
-                    typeof(IUserCredentials),
-                    typeof(UserCredentials)));
-                    ;
-            List<IUserCredentials> expectedUsercreds = fix.CreateMany<IUserCredentials>(50).ToList();
-            expectedUsercreds.ForEach(creds => {
-                connection.Open();
-                creds.Password = "asdf1234";
-                var command = connection.CreateCommand();
-                var user = User.CredentialsToUser(creds).ToDaoUser();
-                command.CommandText = "INSERT into Users(user_id,email,password) values(@user_id,@email,@password)";
-
-                command.Parameters.AddWithValue("@user_id",user.user_id);
-                command.Parameters.AddWithValue("@email",user.email);
-                command.Parameters.AddWithValue("@password",user.password);
-                command.ExecuteNonQuery();
-                connection.Close();
-            });
-            return expectedUsercreds;
-        }
-
-
-        private void prepopulateUserRoles(MySqlConnection connection, List<IRole> roles, List<IUserCredentials> credentials){
-
-            connection.Open();
-            credentials.ForEach(creds => {
-                var user = User.CredentialsToUser(creds).ToDaoUser();
-                var userRoles = roles.RandomElements(3);
-                userRoles.ForEach(role => {
-                    var command = new MySqlCommand();
-                    command.Connection = connection;
-                    command.CommandText = "INSERT into UserRoleRelation(user_fk,role_fk) values(@user_fk,@role_fk)";
-                    command.Parameters.AddWithValue("@user_fk",user.user_id);
-                    command.Parameters.AddWithValue("@role_fk",role.RoleId);
-                    command.ExecuteNonQuery();
-                });
-            });
-            connection.Close();
-        }
 
         [Test,AutoData]
         [Category("Sql")]

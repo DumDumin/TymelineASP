@@ -69,7 +69,7 @@ namespace Tymeline.API.Tests
                 case 1:
                     return results[0];
                 case 0:
-                    throw new KeyNotFoundException("key does not exist in the result"); 
+                    throw new ArgumentException("key does not exist in the result"); 
                 default:
                     throw new ArgumentException("there can only ever be one result with any given id");
             }

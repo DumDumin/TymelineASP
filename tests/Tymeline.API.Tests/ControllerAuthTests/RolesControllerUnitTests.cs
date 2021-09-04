@@ -130,17 +130,17 @@ namespace Tymeline.API.Tests
             return roleList;
         }
 
-        List<IRole> mockRemoveRoleFromItem(IRole role, string to){
-            tymelineObjectRoles.TryGetValue(to,out List<IRole> roles);
+        ITymelineObjectRoles mockRemoveRoleFromItem(IRole role, string toId){
+            tymelineObjectRoles.TryGetValue(toId,out List<IRole> roles);
             roles.Remove(role);
-            return roles;
+            return new TymelineObjectRoles(toId,roles);
         }
 
-        private List<IRole> MockRemoveUserRole(string Email, IRole Role)
+        private IUserRoles MockRemoveUserRole(string email, IRole Role)
         {
-            userRoles.TryGetValue(Email, out var outUserRoles);
+            userRoles.TryGetValue(email, out var outUserRoles);
             outUserRoles.Remove(Role);
-            return outUserRoles;
+            return new UserRoles(email,outUserRoles);
         }
 
         private List<IUser> MockGetUsers()
@@ -150,23 +150,23 @@ namespace Tymeline.API.Tests
         }
        
 
-          List<IRole> mockAddRoleToItem(IRole role, string toId){
+          ITymelineObjectRoles mockAddRoleToItem(IRole role, string toId){
             MockAddRole(role);
             tymelineObjectRoles.TryGetValue(toId,out List<IRole> roles);
             if(!roles.Contains(role)){
                 // only add each role once!
                 roles.Add(role);
             }
-            return roles;
+            return new TymelineObjectRoles(toId,roles);
             
         }
 
-        List<IRole> MockAddRoleToUser(string email, IRole role)
+        IUserRoles MockAddRoleToUser(string email, IRole role)
         {
             MockAddRole(role);
             userRoles.TryGetValue(email, out var outUserRoles);
             outUserRoles.Add(role);
-            return outUserRoles;
+            return new UserRoles(email,outUserRoles);
         }
 
         void MockAddRole(IRole role){
