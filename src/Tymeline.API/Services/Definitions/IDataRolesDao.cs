@@ -13,7 +13,7 @@ public interface IDataRolesDao{
     void RemoveRole(IRole role);
 
     ITymelineObjectRoles RemoveRoleFromItem(IRole role, string toId);
-    IUserRoles RemoveUserRole(IRole role,string email);
+    IUserRoles RemoveUserFromRole(IRole role,string email);
 
     void SetUserRoles(IUserRoles roles);
 }

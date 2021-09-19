@@ -34,10 +34,10 @@ public class DataRolesDao : IDataRolesDao
             command.ExecuteNonQuery();
             transaction.Commit();
         }
-        catch (System.Exception)
+        catch (System.Exception ex)
         {
             transaction.Rollback();
-            throw new ArgumentException();
+            throw new ArgumentException(ex.Message);
         }
         finally{
             sqlConnection.Close();
@@ -78,29 +78,34 @@ public class DataRolesDao : IDataRolesDao
     {
 
         IUser user = _authDao.getUserByMail(email);
+        _AddUserRole(role, user);
+        return GetUserRoles(email);
+    }
+
+    private void _AddUserRole(IRole role, IUser user)
+    {
         sqlConnection.Open();
-        MySqlTransaction transaction= sqlConnection.BeginTransaction();
+        MySqlTransaction transaction = sqlConnection.BeginTransaction();
         try
         {
             MySqlCommand command = new MySqlCommand();
             command.Transaction = transaction;
             command.Connection = sqlConnection;
             command.CommandText = "INSERT INTO UserRoleRelation(user_fk,role_fk) values(@user_id,@role_id)";
-            command.Parameters.AddWithValue("@user_id",user.UserId);
-            command.Parameters.AddWithValue("@role_id",role.RoleId);
+            command.Parameters.AddWithValue("@user_id", user.UserId);
+            command.Parameters.AddWithValue("@role_id", role.RoleId);
             command.ExecuteNonQuery();
             transaction.Commit();
         }
-        catch (System.Exception)
+        catch (System.Exception ex)
         {
             transaction.Rollback();
-            throw new ArgumentException();
+            throw new ArgumentException(ex.Message);
         }
-        finally{
+        finally
+        {
             sqlConnection.Close();
         }
-
-        return GetUserRoles(email);
     }
 
     public List<IRole> GetAllRoles()
@@ -258,7 +263,7 @@ public class DataRolesDao : IDataRolesDao
         return GetItemRoles(toId);
     }
 
-    public IUserRoles RemoveUserRole(IRole role, string email)
+    public IUserRoles RemoveUserFromRole(IRole role, string email)
     {
         IUser user = _authDao.getUserByMail(email);
         

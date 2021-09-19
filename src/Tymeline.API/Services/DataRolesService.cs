@@ -63,12 +63,12 @@ public class DataRolesService : IDataRolesService
 
     public IUserRoles RemoveUserRole(IRole role,string email)
     {
-        return _rolesDao.RemoveUserRole(role,email);
+        return _rolesDao.RemoveUserFromRole(role,email);
     }
 
     public IUserRoles RemoveUserRole(IUserRole userRole)
     {
-        return _rolesDao.RemoveUserRole(userRole.Role,userRole.Email);
+        return _rolesDao.RemoveUserFromRole(userRole.Role,userRole.Email);
     }
 
     public void SetUserRoles(IUserRoles permissions)

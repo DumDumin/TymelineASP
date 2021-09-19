@@ -51,26 +51,30 @@ namespace Tymeline.API.Tests
             _timelineObjectDao = new TymelineObjectDaoMySql(mySqlConnection);
             _authDao = new AuthDao(mySqlConnection);
             _rolesDao = new DataRolesDao(mySqlConnection,_authDao,_timelineObjectDao);
+
+
             TestUtil.setupDB(mySqlConnection);
             var items = TestUtil.prepopulateTymelineObjects(mySqlConnection);
-
-
-            var roles = TestUtil.prepopulateRoles(mySqlConnection);
             var users = TestUtil.prepopulateUser(mySqlConnection);
+            var roles = TestUtil.prepopulateRoles(mySqlConnection);
             TestUtil.prepopulateUserRoles(mySqlConnection,roles,users);
             TestUtil.prepopulateItemRoles(mySqlConnection,roles,items);
-        }
-
-
-        private void setupDB(MySqlConnection connection){
-            TestUtil.setupDB(connection);
+            TestUtil.EnsureSuccessfullSetup(mySqlConnection);
         }
 
        
+        [Test]
+        public void Test_There_Are_Roles_in_Roles_Table(){
+            _rolesDao.GetAllRoles().Should().NotBeEmpty();
+        }
+
+
+
 
 
         [Test,AutoData]
         public void Test_AddRole_With_New_Role_Expect_Success(Role role){
+            role.RoleId = new Random().Next(7501,10000);
             Action act = () => _rolesDao.AddRole(role);
             act.Should().NotThrow();
             _rolesDao.GetAllRoles().Should().Contain(role);
@@ -105,8 +109,11 @@ namespace Tymeline.API.Tests
             act.Should().Throw<ArgumentException>();
         }
             [Test,AutoData]
+            // [Retry(2)]
             public void Test_AddRoleToItem_With_Not_Existing_Role_And_Existing_Item_Expect_Exception(Role fakeRole){
+            fakeRole.RoleId = new Random().Next(5001,7500);
             TymelineObject randomItem = _timelineObjectDao.getAll().RandomElement();
+            _rolesDao.GetAllRoles().Should().NotContain(fakeRole);
             Action act = () => _rolesDao.AddRoleToItem(fakeRole,randomItem.Id);
             act.Should().Throw<ArgumentException>();
         }
@@ -117,11 +124,14 @@ namespace Tymeline.API.Tests
         }
             [Test]
             public void Test_AddUserRole_With_Existing_Role_And_Existing_User_Expect_Success(){
+            // ensure that chosen Role is not already assigned to the User
             IUser randomUser = _authDao.GetUsers().RandomElement();
-            IRole randomRole =_rolesDao.GetAllRoles().RandomElement();
+            IUserRoles exRoles =  _rolesDao.GetUserRoles(randomUser.Email);
+            IRole randomRole =_rolesDao.GetAllRoles().RandomElementWithout(exRoles.Roles);
+            
+            _rolesDao.GetUserRoles(randomUser.Email).Roles.Should().NotContain(randomRole);
 
-            var userRoles = _rolesDao.AddUserRole(randomRole,randomUser.Email);
-            userRoles.Roles.Should().Contain(randomRole);
+            _rolesDao.AddUserRole(randomRole,randomUser.Email).Roles.Should().Contain(randomRole);
         }
             [Test,AutoData]
             public void Test_AddUserRole_With_Existing_Role_And_Not_Existing_User_Expect_Exception(User fakeUser){
@@ -130,8 +140,9 @@ namespace Tymeline.API.Tests
             act.Should().Throw<ArgumentException>();
         }
 
-             [Test,AutoData]
+            [Test,AutoData]
             public void Test_AddUserRole_With_Not_Existing_Role_And_Existing_User_Expect_Exception(Role fakeRole){
+            fakeRole.RoleId = new Random().Next(2501,5000);
             IUser randomUser = _authDao.GetUsers().RandomElement();
             Action act = () => _rolesDao.AddUserRole(fakeRole,randomUser.Email);
             act.Should().Throw<ArgumentException>();
@@ -186,17 +197,17 @@ namespace Tymeline.API.Tests
             public void Test_RemoveUserRole_With_Existing_User_and_Existing_Role_Expect_Success(){
                 var randomUser = _authDao.GetUsers().RandomElement();
                 var randomRole = _rolesDao.GetUserRoles(randomUser.Email).Roles.RandomElement();
-                _rolesDao.RemoveUserRole(randomRole, randomUser.Email).Roles.Should().NotContain(randomRole);
+                _rolesDao.RemoveUserFromRole(randomRole, randomUser.Email).Roles.Should().NotContain(randomRole);
             }
             [Test,AutoData]
             public void Test_RemoveUserRole_With_Existing_User_and_Not_Existing_Role_Expect_Success(Role fakeRole){
                 var randomUser = _authDao.GetUsers().RandomElement();
-                _rolesDao.RemoveUserRole(fakeRole, randomUser.Email).Roles.Should().NotContain(fakeRole);
+                _rolesDao.RemoveUserFromRole(fakeRole, randomUser.Email).Roles.Should().NotContain(fakeRole);
                 // act.Should().Throw<ArgumentException>();
             }
             [Test,AutoData]
             public void Test_RemoveUserRole_With_Not_Existing_User_and_Not_Existing_Role_Expect_ArgumentException(User fakeUser, Role fakeRole){
-                Action act = () =>_rolesDao.RemoveUserRole(fakeRole, fakeUser.Email);
+                Action act = () =>_rolesDao.RemoveUserFromRole(fakeRole, fakeUser.Email);
                 act.Should().Throw<ArgumentException>();
             }
 

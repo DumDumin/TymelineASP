@@ -49,17 +49,12 @@ namespace Tymeline.API.Tests
             _timelineObjectDao = new TymelineObjectDaoMySql(mySqlConnection);
             _authDao = new AuthDao(mySqlConnection);
             TestUtil.setupDB(mySqlConnection);
-            TestUtil.prepopulateTymelineObjects(mySqlConnection);
-
-
-            var roles = TestUtil.prepopulateRoles(mySqlConnection);
+            var items = TestUtil.prepopulateTymelineObjects(mySqlConnection);
             var users = TestUtil.prepopulateUser(mySqlConnection);
+            var roles = TestUtil.prepopulateRoles(mySqlConnection);
             TestUtil.prepopulateUserRoles(mySqlConnection,roles,users);
-        }
-
-
-        private void setupDB(MySqlConnection connection){
-            TestUtil.setupDB(connection);
+            TestUtil.prepopulateItemRoles(mySqlConnection,roles,items);
+            TestUtil.EnsureSuccessfullSetup(mySqlConnection);
         }
 
 

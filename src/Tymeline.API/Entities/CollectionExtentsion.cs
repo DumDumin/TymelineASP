@@ -4,12 +4,21 @@ using System.Linq;
 
 public static class CollectionExtension
 {
+
+
     private static Random rng = new Random();
 
     public static T RandomElement<T>(this IList<T> list)
     {
         return list[rng.Next(list.Count)];
     }
+
+    public static T RandomElementWithout<T>(this IList<T> list, IList<T> exceptions)
+    {
+        exceptions.ToList().ForEach(ex => list.Remove(ex));
+        return list[rng.Next(list.Count)];
+    }
+
 
     public static T RandomElement<T>(this T[] array)
     {

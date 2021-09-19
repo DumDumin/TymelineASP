@@ -449,9 +449,6 @@ namespace Tymeline.API.Tests
             var setup = await _client.PostAsync($"https://localhost:5001/roles/additemrole",JsonContent.Create(payload));
             var setupresponse = await setup.Content.ReadAsStringAsync();
          
-          
-
-
             var roleResponse = await _client.PostAsync($"https://localhost:5001/roles/additemrole",JsonContent.Create(payload));
 
             var response = await roleResponse.Content.ReadAsStringAsync();

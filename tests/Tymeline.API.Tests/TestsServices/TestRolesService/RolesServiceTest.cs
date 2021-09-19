@@ -67,7 +67,7 @@ namespace Tymeline.API.Tests
 
 
             _rolesDao.Setup(s => s.SetUserRoles(It.IsAny<IUserRoles>())).Callback((IUserRoles s) => mockSetUserRoles(s));
-            _rolesDao.Setup(s => s.RemoveUserRole(It.IsAny<IRole>(), It.IsAny<string>())).Returns((IRole r, string s) => mockRemoveUserRole(r, s));
+            _rolesDao.Setup(s => s.RemoveUserFromRole(It.IsAny<IRole>(), It.IsAny<string>())).Returns((IRole r, string s) => mockRemoveUserRole(r, s));
             _rolesDao.Setup(s => s.RemoveRoleFromItem(It.IsAny<IRole>(), It.IsAny<string>())).Returns((IRole r, string i) => mockRemoveRoleFromItem(r, i));
             _rolesDao.Setup(s => s.RemoveRole(It.IsAny<IRole>())).Callback((IRole s) => mockRemoveRole(s));
             _rolesDao.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string s) => mockGetUserRoles(s));
