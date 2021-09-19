@@ -87,6 +87,7 @@ namespace Tymeline.API.Tests
             string jwt = cookies.First(s => s.StartsWith("jwt"));
             jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=", "");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+            _client.DefaultRequestHeaders.Add("Cookie",jwt);
             return credentials;
         }
 

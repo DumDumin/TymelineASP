@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -45,27 +47,39 @@ namespace Tymeline.API
             services.AddAuthorization(options => {
                 options.AddPolicy("CanAffectRoles", policy => policy.RequireClaim("CanAffectRoles"));
             });
+
+
+
+    
+
             services.AddAuthentication(options =>  
             {  
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;  
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;  
             })
-            .AddJwtBearer(config =>  
-            {   
-                config.RequireHttpsMetadata = false;  
-                config.SaveToken = true;  
-                config.TokenValidationParameters = new TokenValidationParameters()  
-                {  
-                    IssuerSigningKey = signingKey,  
-                    ValidateAudience = true,  
-                    ValidAudience = Configuration["AppSettings:Hostname"],  
-                    ValidateIssuer = true,  
-                    ValidIssuer = Configuration["AppSettings:Hostname"],  
-                    ValidateLifetime = true,  
-                    ValidateIssuerSigningKey = true  
-                };  
-        
-            });  
+            .AddJwtBearer(config =>
+            {
+
+                config.Events = new JwtBearerEvents
+                {
+
+                    OnMessageReceived = IntegrateCookiesAsJWTBearer()
+                };
+
+                config.RequireHttpsMetadata = false;
+                config.SaveToken = true;
+                config.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    IssuerSigningKey = signingKey,
+                    ValidateAudience = true,
+                    ValidAudience = Configuration["AppSettings:Hostname"],
+                    ValidateIssuer = true,
+                    ValidIssuer = Configuration["AppSettings:Hostname"],
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true
+                };
+
+            });
 
             
             services.AddTransient<MySqlConnection>(_ => new MySqlConnection(Configuration["AppSettings:SqlConnection:MySqlConnectionString"]));
@@ -86,6 +100,48 @@ namespace Tymeline.API
             });
         }
 
+        private static Func<MessageReceivedContext, Task> IntegrateCookiesAsJWTBearer()
+        {
+            return context =>
+            {
+                // string authorization = context.Request.Headers["Authorization"];
+                // cookie Primogeniture
+                string authorization;
+                try
+                {
+                    authorization = context.Request.Cookies["jwt"].ToString().Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=", "");
+
+                }
+                catch (System.Exception)
+                {
+
+                    authorization = context.Request.Headers["Authorization"];
+
+                }
+
+                // If no authorization header found, nothing to process further
+                if (string.IsNullOrEmpty(authorization))
+                {
+                    context.NoResult();
+                    return Task.CompletedTask;
+                }
+
+                if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Token = authorization.Substring("Bearer ".Length).Trim();
+                }
+
+                // If no token found, no further work possible
+                if (string.IsNullOrEmpty(context.Token))
+                {
+                    context.NoResult();
+                    return Task.CompletedTask;
+                }
+
+                return Task.CompletedTask;
+            };
+        }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -97,15 +153,12 @@ namespace Tymeline.API
             }
             else if(env.IsProduction()){
             }
-            // app.UseMiddleware<TestMiddleware>();
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
             // first Authentication then Authorization!
-
-            
 
             app.UseAuthentication();
             app.UseAuthorization();

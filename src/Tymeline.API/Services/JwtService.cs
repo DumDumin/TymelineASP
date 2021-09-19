@@ -32,7 +32,7 @@ public class JwtService : IJwtService
             opt.Domain = "localhost";
             opt.HttpOnly = true;
             opt.Secure = true;
-            opt.SameSite = SameSiteMode.Strict;
+            opt.SameSite = SameSiteMode.None;
             opt.MaxAge = TimeSpan.FromHours(12);
             Response.Cookies.Append("jwt", createJwt(mail), opt);
             return Response;
@@ -51,8 +51,6 @@ public class JwtService : IJwtService
                 Subject = new ClaimsIdentity(new Claim[] 
                 {
                     //add new claims in here
-                    
-  
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
@@ -65,8 +63,6 @@ public class JwtService : IJwtService
         claimlist.Add(new Claim(ClaimTypes.Name, userMail));
         claimlist.Add(new Claim(ClaimTypes.Role, "admin"));
         tokenDescriptor.Subject.AddClaims(claimlist);
-
-
         var token = tokenHandler.CreateToken(tokenDescriptor);
         
         return tokenHandler.WriteToken(token);
