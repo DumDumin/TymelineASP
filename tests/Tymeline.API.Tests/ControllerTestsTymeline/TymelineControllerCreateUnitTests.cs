@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -24,9 +26,9 @@ namespace Tymeline.API.Tests
         private HttpClient _client;
         private Moq.Mock<ITymelineService> _tymelineService;
         private Moq.Mock<IAuthService> _authService;
-
+        private Moq.Mock<IDataRolesService> _dataRolesService;
         private AppSettings _configuration;
-
+         Dictionary<string,IUser> userdict;
 
         public static AppSettings GetApplicationConfiguration()
         {
@@ -50,35 +52,73 @@ namespace Tymeline.API.Tests
         {
             _factory = new WebApplicationFactory<Startup>();
             _tymelineService = new Moq.Mock<ITymelineService>();
-            _authService = new Mock<IAuthService>();
+            _authService = new Moq.Mock<IAuthService>();
+            _dataRolesService = new Moq.Mock<IDataRolesService>();
             
-
             _configuration = GetApplicationConfiguration();
 
             _client = _factory.WithWebHostBuilder(builder =>
             {   
                 builder.ConfigureTestServices(services => 
-                {   
+                {
                     services.AddScoped<ITymelineService>(s => _tymelineService.Object);
-                    services.AddScoped<IAuthService>(s => _authService.Object);
+                    services.AddTransient<IAuthService>(s => _authService.Object);
                     services.AddSingleton(_configuration);
                 });
             }).CreateClient();
-            _tymelineService.Setup(s => s.Create(It.IsAny<TymelineObject>())).Returns((TymelineObject tO) => mockCreateTymelineObject(tO));
-
+            userdict = TestUtil.createUserDict();
+            _tymelineService.Setup(s => s.Create(It.IsAny<TymelineObject>())).Returns((TymelineObject tO) => TestUtil.mockCreateTymelineObject(tO));
+            _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email)=> TestUtil.mockGetUserPermissions(email));
+            _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
         }
 
-        private TymelineObject mockCreateTymelineObject(TymelineObject tO){
-            tO.Id = Guid.NewGuid().ToString();
-            return tO;
+    public IUser MockLogin(UserCredentials credentials)
+    {
+        if (credentials.complete())
+        {
+            // check if user is registered
+            if(userdict.ContainsKey(credentials.Email)){
+                return TestUtil.MockPasswdCheck(credentials.Password, userdict[credentials.Email]);
+            }
+            throw new ArgumentException();
         }
+        else
+        {
+           throw new ArgumentException();
+        }
+    }
+
+
+
+      private async Task<UserCredentials> Login()
+        {
+            UserCredentials credentials = new UserCredentials("test5@email.de", "hunter12");
+            JsonContent content = JsonContent.Create(credentials);
+
+            Uri uriLogin = new Uri("https://localhost:5001/auth/login");
+            var response = await _client.PostAsync(uriLogin.AbsoluteUri, content);
+            var result = response.Content.ReadAsStringAsync().Result;
+            var user = JsonConvert.DeserializeObject<User>(result);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
+            string jwt = cookies.First(s => s.StartsWith("jwt"));
+            jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=", "");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+            _client.DefaultRequestHeaders.Add("Cookie",jwt);
+            return credentials;
+        }
+        
+
 
 
         [Test]
         public async Task Test_TymelineCreate_With_New_Entry_Returns_New_Entry_And_201() {
+            await Login();
             TymelineObject tymelineObject = new TymelineObject(189890,new Content("testContent"),10000000,false,false);
-           
-            JsonContent content =  JsonContent.Create(tymelineObject);
+            Role r = new Role("item","personal");
+            List<Role> roles  = new List<Role>();
+            HttpTymelineObjectWithRole to = new HttpTymelineObjectWithRole{tymelineObject= tymelineObject, Roles = roles };
+            JsonContent content =  JsonContent.Create(to);
 
 
             var response = await _client.PostAsync($"https://localhost:5001/tymeline/create",content);
@@ -88,11 +128,15 @@ namespace Tymeline.API.Tests
         }
 
 
-         [Test]
+        [Test]
         public async Task Test_TymelineCreate_With_New_Entry_Returns_New_Entry_And_201_and_new_Id() {
+            await Login();
             TymelineObject tymelineObject = new TymelineObject(){Content=new Content("testContent"), Length=10000000, Start=10000,CanChangeLength= false,CanMove= false};
             tymelineObject.Id.Should().BeNull();
-            JsonContent content =  JsonContent.Create(tymelineObject);
+            Role r = new Role("item","personal");
+            List<Role> roles  = new List<Role>();
+            HttpTymelineObjectWithRole to = new HttpTymelineObjectWithRole{tymelineObject= tymelineObject, Roles = roles };
+            JsonContent content =  JsonContent.Create(to);
 
 
             var response = await _client.PostAsync($"https://localhost:5001/tymeline/create",content);

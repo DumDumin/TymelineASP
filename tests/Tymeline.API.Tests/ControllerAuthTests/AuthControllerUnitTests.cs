@@ -30,7 +30,7 @@ namespace Tymeline.API.Tests
         private Mock<IDataRolesService> _dataRolesService;
         private UtilService _utilService;
         AppSettings _appSettings;
-        Dictionary<string,IUser> userdict;
+        Dictionary<string, IUser> userdict;
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
@@ -41,39 +41,41 @@ namespace Tymeline.API.Tests
             _dataRolesService = new Mock<IDataRolesService>();
             _utilService = new UtilService();
 
-            userdict = createUserDict();
+            userdict = TestUtil.createUserDict();
             _client = _factory.WithWebHostBuilder(builder =>
             {
-                builder.ConfigureTestServices(services => 
-                {   
+                builder.ConfigureTestServices(services =>
+                {
                     services.AddSingleton<IDataRolesService>(s => _dataRolesService.Object);
-                    services.AddSingleton<IJwtService,JwtService>();      
+                    services.AddSingleton<IJwtService, JwtService>();
                     services.AddSingleton<IAuthService>(s => _authService.Object);
                     services.AddSingleton<UtilService>(s => _utilService);
                 });
             }).CreateClient();
-            _dataRolesService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email)=> mockGetUserPermissions(email));
-            _authService.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials cc) =>  MockRegister(cc));
-            _authService.Setup(s => s.getUsers()).Returns(() =>  MockGetUsers());
+            _dataRolesService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => TestUtil.mockGetUserPermissions(email));
+            _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => TestUtil.mockGetUserPermissions(email));
+            _authService.Setup(s => s.Register(It.IsAny<IUserCredentials>())).Returns((IUserCredentials cc) => MockRegister(cc));
+            _authService.Setup(s => s.getUsers()).Returns(() => MockGetUsers());
             _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
-            
+
         }
 
         [SetUp]
-        public void Setup()
+        public async Task SetUpAsync()
         {
-           
+            await Login();
         }
 
-        private IUserRoles mockGetUserPermissions(string email){
-            var UserPermissions = new UserRoles(email, new List<IRole>());
-            UserPermissions.Roles.Add(new Role("test","value"));
-            return UserPermissions;
+        [TearDown]
+        public void TearDown()
+        {
+            _client.DefaultRequestHeaders.Clear();
+
         }
 
 
 
-         private async Task<UserCredentials> Login()
+        private async Task<UserCredentials> Login()
         {
             UserCredentials credentials = new UserCredentials("test5@email.de", "hunter12");
             JsonContent content = JsonContent.Create(credentials);
@@ -87,119 +89,57 @@ namespace Tymeline.API.Tests
             string jwt = cookies.First(s => s.StartsWith("jwt"));
             jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=", "");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
-            _client.DefaultRequestHeaders.Add("Cookie",jwt);
+            _client.DefaultRequestHeaders.Add("Cookie", jwt);
             return credentials;
         }
 
-        private Dictionary<string,IUser> createUserDict()
-        {   
-            var passwordHasher = new PasswordHasher();
-            Dictionary<string,IUser> users = new Dictionary<string, IUser>();
-            for (int i = 2; i < 100; i++)
-            {
-                User user = new User($"test{i}@email.de",passwordHasher.Hash("hunter12"));
-                users.Add(user.Email,user);
-            }
-            return users;
-        }
-        private IUser MockRegister(IUserCredentials credentials){
 
-            if (credentials.complete())
-            {
-                
-                if(_utilService.IsValidEmail(credentials.Email).Equals(true)){
 
-                    User user = User.CredentialsToUser(credentials);
-                    if (userdict.ContainsKey(user.Email)){
-                        throw new ArgumentException();
-                    }
-                    else {
-                        userdict.Add(user.Email, user);
-                        return user;
-                    }
 
-                }
-                else{
-                    throw new ArgumentException();
-                }
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
 
-            
-        }
-
-        private List<IUser> MockGetUsers()
-        {
-            return userdict.Values.ToList().Select(element => element).ToList();
-
-        }
-
-    private IUser MockLogin(UserCredentials credentials)
-    {
-        if (credentials.complete())
-        {
-            // check if user is registered
-            if(userdict.ContainsKey(credentials.Email)){
-            
-                return MockPasswdCheck(credentials.Password, userdict[credentials.Email]);
-                
-            }
-            throw new ArgumentException();
-        }
-        else
-        {
-           throw new ArgumentException();
-        }
-        
-    }
-    private IUser MockPasswdCheck(string Password, IUser BaseUser){
-        return BaseUser.verifyPassword(Password);
-    }
-
-    
 
         [Test]
-        public async Task TestAuthRegister_with_new_email_return_201_with_content(){
-            UserCredentials credentials = new UserCredentials("hunter@email.de","hunter12");
+        public async Task TestAuthRegister_with_new_email_return_201_with_content()
+        {
+            UserCredentials credentials = new UserCredentials("hunter@email.de", "hunter12");
 
-            JsonContent content =  JsonContent.Create(credentials);
-       
-        
-            var response = await _client.PostAsync("https://localhost:5001/auth/register",content);
+            JsonContent content = JsonContent.Create(credentials);
+
+
+            var response = await _client.PostAsync("https://localhost:5001/auth/register", content);
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(201,(int)statusCode);
-            Assert.AreEqual(credentials.Email,JsonConvert.DeserializeObject<User>(responseString).Email);
-            Assert.AreEqual(JsonConvert.SerializeObject(User.CredentialsToUser(credentials)),responseString);
+            Assert.AreEqual(201, (int)statusCode);
+            Assert.AreEqual(credentials.Email, JsonConvert.DeserializeObject<User>(responseString).Email);
+            Assert.AreEqual(JsonConvert.SerializeObject(User.CredentialsToUser(credentials)), responseString);
         }
 
 
         [Test]
-        public async Task TestAuthRegister_with_used_email_return_400_with_content(){
-            UserCredentials credentials = new UserCredentials("test3@email.de","hunter12");
-            JsonContent content =  JsonContent.Create(credentials);
-           
-            var response = await _client.PostAsync("https://localhost:5001/auth/register",content);
+        public async Task TestAuthRegister_with_used_email_return_400_with_content()
+        {
+            UserCredentials credentials = new UserCredentials("test3@email.de", "hunter12");
+            JsonContent content = JsonContent.Create(credentials);
+
+            var response = await _client.PostAsync("https://localhost:5001/auth/register", content);
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(400,(int)statusCode);
-            Assert.AreEqual("",responseString);
+            Assert.AreEqual(400, (int)statusCode);
+            Assert.AreEqual("", responseString);
 
         }
 
 
         [Test]
-        public async Task TestAuthRegister_with_invalid_email_return_400(){
-            UserCredentials credentials = new UserCredentials("email.de","hunter12");
-            JsonContent content =  JsonContent.Create(credentials);
-    
-            var response = await _client.PostAsync("https://localhost:5001/auth/register",content);
+        public async Task TestAuthRegister_with_invalid_email_return_400()
+        {
+            UserCredentials credentials = new UserCredentials("email.de", "hunter12");
+            JsonContent content = JsonContent.Create(credentials);
+
+            var response = await _client.PostAsync("https://localhost:5001/auth/register", content);
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(400,(int)statusCode);
+            Assert.AreEqual(400, (int)statusCode);
 
         }
 
@@ -210,28 +150,28 @@ namespace Tymeline.API.Tests
             var response = await _client.GetAsync("https://localhost:5001/auth/users");
             var responseObject = await response.Content.ReadFromJsonAsync<List<User>>();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(200,(int)statusCode);
+            Assert.AreEqual(200, (int)statusCode);
             Assert.IsInstanceOf<List<User>>(responseObject);
         }
 
-       
+
 
 
         [Test]
         public async Task TestUserLogin_with_registeredAccountAndCorrectCredentials_expectJWT()
         {
-            UserCredentials credentials = new UserCredentials("test5@email.de","hunter12");
+            UserCredentials credentials = new UserCredentials("test5@email.de", "hunter12");
 
-            JsonContent content =  JsonContent.Create(credentials);
-           
-            
+            JsonContent content = JsonContent.Create(credentials);
+
+
             Uri uri = new Uri("https://localhost:5001/auth/login");
-            var response = await _client.PostAsync(uri.AbsoluteUri,content);
-           
+            var response = await _client.PostAsync(uri.AbsoluteUri, content);
+
             IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
             var responseObject = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(200,(int)statusCode);
+            Assert.AreEqual(200, (int)statusCode);
             Assert.IsNotEmpty(cookies);
         }
 
@@ -239,59 +179,62 @@ namespace Tymeline.API.Tests
         [Test]
         public async Task TestUserLogin_with_registeredAccountAndIncorrectCredentials_expectError()
         {
-            UserCredentials credentials = new UserCredentials("test5@email.de","hunter13");
+            UserCredentials credentials = new UserCredentials("test5@email.de", "hunter13");
 
-            JsonContent content =  JsonContent.Create(credentials);            
+            JsonContent content = JsonContent.Create(credentials);
             Uri uri = new Uri("https://localhost:5001/auth/login");
-            var response = await _client.PostAsync(uri.AbsoluteUri,content);
-           
+            var response = await _client.PostAsync(uri.AbsoluteUri, content);
+
             IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
             var responseObject = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(400,(int)statusCode);
+            Assert.AreEqual(400, (int)statusCode);
         }
 
         [Test]
         public async Task TestUserLogin_with_unregisteredAccountAndIncorrectCredentials_expectError()
         {
             IUserCredentials credentials = new UserCredentials("test5@emailas.de", "hunter12");
-            JsonContent content =  JsonContent.Create(credentials);
+            JsonContent content = JsonContent.Create(credentials);
             Uri uri = new Uri("https://localhost:5001/auth/login");
-            var response = await _client.PostAsync(uri.AbsoluteUri,content);
-           
+            var response = await _client.PostAsync(uri.AbsoluteUri, content);
+
             IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
             var responseObject = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(400,(int)statusCode);
+            Assert.AreEqual(400, (int)statusCode);
         }
 
 
         [Test]
-        public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_JWT_Expect_Success(){
+        public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_JWT_Expect_Success()
+        {
             await Login();
             Uri uriTest = new Uri("https://localhost:5001/auth/testjwt");
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var statusCode = responseTest.StatusCode;
-            Assert.AreEqual(HttpStatusCode.OK,statusCode);
+            Assert.AreEqual(HttpStatusCode.OK, statusCode);
         }
 
 
         [Test]
-        public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_Authentication_expect_Claims(){
+        public async Task TestUserLogin_with_registeredAccount_Return_JWT_Test_Authentication_expect_Claims()
+        {
             await Login();
             Uri uriTest = new Uri("https://localhost:5001/roles/userInfo");
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
             var responseObject = await responseTest.Content.ReadAsStringAsync();
             var statusCode = responseTest.StatusCode;
-            Assert.AreEqual(HttpStatusCode.OK,statusCode);
+            Assert.AreEqual(HttpStatusCode.OK, statusCode);
         }
 
 
 
         [Test]
-        public async Task Test_UserInfo_with_registeredAccount_Return_Permissions_for_User(){
-            
+        public async Task Test_UserInfo_with_registeredAccount_Return_Permissions_for_User()
+        {
+
             await Login();
             Uri uriTest = new Uri("https://localhost:5001/roles/userInfo");
             var responseTest = await _client.GetAsync(uriTest.AbsoluteUri);
@@ -299,16 +242,72 @@ namespace Tymeline.API.Tests
             var parsedObject = JsonConvert.DeserializeObject<UserRoles>(responseObject);
             Assert.NotNull(parsedObject.Email);
             Assert.NotNull(parsedObject.Roles);
-            Assert.AreEqual(mockGetUserPermissions("test5@email.de").Roles,parsedObject.Roles);
+            Assert.AreEqual(TestUtil.mockGetUserPermissions("test5@email.de").Roles, parsedObject.Roles);
 
-            
+
         }
 
-        
 
-          
+        private IUser MockRegister(IUserCredentials credentials)
+        {
+
+            if (credentials.complete())
+            {
+
+                if (_utilService.IsValidEmail(credentials.Email).Equals(true))
+                {
+
+                    User user = User.CredentialsToUser(credentials);
+                    if (userdict.ContainsKey(user.Email))
+                    {
+                        throw new ArgumentException();
+                    }
+                    else
+                    {
+                        userdict.Add(user.Email, user);
+                        return user;
+                    }
+
+                }
+                else
+                {
+                    throw new ArgumentException();
+                }
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+
+
+        }
+
+        private List<IUser> MockGetUsers()
+        {
+            return userdict.Values.ToList().Select(element => element).ToList();
+
+        }
+
+        private IUser MockLogin(UserCredentials credentials)
+        {
+            if (credentials.complete())
+            {
+                // check if user is registered
+                if (userdict.ContainsKey(credentials.Email))
+                {
+                    return TestUtil.MockPasswdCheck(credentials.Password, userdict[credentials.Email]);
+                }
+                throw new ArgumentException();
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+
+        }
+
     }
-  
+
 }
 
 

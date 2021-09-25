@@ -17,11 +17,11 @@ public class JwtService : IJwtService
 {
 
 
-    private IDataRolesService _rolesService;
+    private IAuthService _authService;
     private readonly AppSettings _appSettings;
-    public JwtService(IDataRolesService rolesService,IOptions<AppSettings> appSettings){
+    public JwtService(IAuthService authService, IOptions<AppSettings> appSettings){
         _appSettings = appSettings.Value;
-        _rolesService = rolesService;
+        _authService = authService;
     }
     
     
@@ -39,7 +39,7 @@ public class JwtService : IJwtService
         }
     public string createJwt(string userMail)
     {
-        List<IRole> userRoles = _rolesService.GetUserRoles(userMail).Roles.Where(permission => permission.Type.Equals("Frontend")).ToList();
+        List<IRole> userRoles = _authService.GetUserRoles(userMail).Roles.Where(permission => permission.Type.Equals("Frontend")).ToList();
 
 
         var utcNow = DateTime.UtcNow; 

@@ -34,7 +34,7 @@ namespace Tymeline.API.Tests
             _utilService = new UtilService();
             _rolesService = new Mock<IDataRolesService>();
             _authService = new AuthService(_authDao.Object, _utilService,_rolesService.Object, _appSettingsOptions);
-            _jwtService = new JwtService(_rolesService.Object,_appSettingsOptions);
+            _jwtService = new JwtService(_authService,_appSettingsOptions);
             _rolesService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email)=> mockGetUserPermissions(email));
             _authDao.Setup(s => s.getUserByMail(It.IsAny<string>())).Returns((string mail) => MockGetUserByMail(mail));
             _authDao.Setup(s => s.GetUsers()).Returns(() => MockGetUser());

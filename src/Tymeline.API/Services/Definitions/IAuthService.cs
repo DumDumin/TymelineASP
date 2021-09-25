@@ -4,7 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 public interface IAuthService
 {
 
-
+    IUserRoles GetUserRoles(string email);
     IUser Login(IUserCredentials credentials);
     IUser Register(IUserCredentials credentials);
     List<IUser> getUsers();

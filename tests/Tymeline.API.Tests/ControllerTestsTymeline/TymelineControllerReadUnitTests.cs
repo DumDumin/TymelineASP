@@ -19,6 +19,8 @@ using Moq;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Principal;
 using Microsoft.Extensions.Options;
+using System.Net.Http.Json;
+using System.Net.Http.Headers;
 
 namespace Tymeline.API.Tests
 {
@@ -33,6 +35,8 @@ namespace Tymeline.API.Tests
 
         private List<TymelineObject> tymelineList;
 
+        Dictionary<string, IUser> userdict;
+
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
@@ -41,74 +45,55 @@ namespace Tymeline.API.Tests
             _authService = new Mock<IAuthService>();
             tymelineList = TestUtil.setupTymelineList();
             _client = _factory.WithWebHostBuilder(builder =>
-            {   
-                builder.ConfigureTestServices(services => 
-                {   
+            {
+                builder.ConfigureTestServices(services =>
+                {
                     services.AddScoped<ITymelineService>(s => _tymelineService.Object);
-                    services.AddScoped<IAuthService>(s => _authService.Object);
+                    services.AddTransient<IAuthService>(s => _authService.Object);
                 });
             }).CreateClient();
+            userdict = TestUtil.createUserDict();
             _tymelineService.Setup(s => s.GetById(It.IsAny<string>())).Returns((string key) => mockTymelineReturnById(key));
-            _tymelineService.Setup(s => s.GetByTime(It.IsAny<int>(),It.IsAny<int>())).Returns((int start, int end) => mockTymelineReturnByTime(start,end));
+            _tymelineService.Setup(s => s.GetByTime(It.IsAny<int>(), It.IsAny<int>())).Returns((int start, int end) => mockTymelineReturnByTime(start, end));
+            _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => TestUtil.mockGetUserPermissions(email));
+            _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
         }
+
 
         [SetUp]
-        public void Setup()
+        public async Task SetUpAsync()
+        {   
+            await Login();
+        }
+
+        [TearDown]
+        public void TearDown()
         {
-           
-
+            _client.DefaultRequestHeaders.Clear();
+         
         }
-
-
-
-        private List<TymelineObject> mockTymelineReturnByTime(int start,int end){
-           
-            var s = tymelineList.Where(element => start<element.Start+element.Length && start>element.Start+element.Length).ToList();
-            s.AddRange(tymelineList.Where(element => start<element.Start && element.Start<end).ToList());
-            return s.Distinct().ToList();
-        }
-
-        private TymelineObject mockTymelineReturnById(string identifier)
-        
-        {
-            
-            var results = tymelineList.Where(element => element.Id.Equals(identifier)).ToList();
-            // var results = from obj in array where obj.Id.Equals(identifier) select obj; 
-
-            switch (results.Count())
-            {
-                case 1:
-                    return results[0];
-                case 0:
-                    throw new ArgumentException("key does not exist in the result"); 
-                default:
-                    throw new ArgumentException("doesnt make sense!");
-            }
-        }
-    
-
 
 
         [Test]
         public async Task Test_TymelinegetAll_returnsValidJSON_forListTymelineObject()
-        {   
-            _tymelineService.Setup(s => s.GetAll()).Returns(tymelineList); 
+        {
+            _tymelineService.Setup(s => s.GetAll()).Returns(tymelineList);
             var response = await _client.GetAsync("https://localhost:5001/tymeline/get");
             var responseString = await response.Content.ReadAsStringAsync();
-            
-            Assert.AreEqual(tymelineList,JsonConvert.DeserializeObject<List<TymelineObject>>(responseString));
-        } 
+
+            Assert.AreEqual(tymelineList, JsonConvert.DeserializeObject<List<TymelineObject>>(responseString));
+        }
 
 
-          [Test]
+        [Test]
         public async Task Test_TymelinegetById_returnsValidJSON_forTymelineObject()
-        {   
-        
+        {
+
             string key = "2";
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             // ugly testing code . fix this!
-            Assert.AreEqual(HttpStatusCode.OK,response.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
             Assert.AreEqual(mockTymelineReturnById(key),
             JsonConvert.DeserializeObject<TymelineObject>(responseString));
         }
@@ -116,12 +101,12 @@ namespace Tymeline.API.Tests
         [Test]
         public async Task Test_TymelineById_returns_204_forNotExistingElement()
         {
-        
+
             string key = "105";
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.NoContent,statusCode);
+            Assert.AreEqual(HttpStatusCode.NoContent, statusCode);
         }
 
 
@@ -134,21 +119,21 @@ namespace Tymeline.API.Tests
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.NoContent,statusCode);
+            Assert.AreEqual(HttpStatusCode.NoContent, statusCode);
         }
 
 
         [Test]
         public async Task Test_TymelineById_returns_500_forBackendError()
         {
-            
+
             string key = "99";
-            
+
             _tymelineService.Setup(s => s.GetById(key)).Throws(new KeyNotFoundException());
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.InternalServerError,statusCode);
+            Assert.AreEqual(HttpStatusCode.InternalServerError, statusCode);
         }
 
 
@@ -157,30 +142,90 @@ namespace Tymeline.API.Tests
         {
             var start = 12000;
             var end = 13000;
-            
+
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/getbytime/{start}-{end}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.OK,statusCode);
-       
+            Assert.AreEqual(HttpStatusCode.OK, statusCode);
+
         }
 
-                [Test]
+        [Test]
         public async Task Test_TymelineByTime_ListOfTymelineObject_forValidTime()
         {
             var start = 12000;
             var end = 13000;
-            
+
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/getbytime/{start}-{end}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(mockTymelineReturnByTime(start,end),JsonConvert.DeserializeObject<List<TymelineObject>>(responseString)
+            Assert.AreEqual(mockTymelineReturnByTime(start, end), JsonConvert.DeserializeObject<List<TymelineObject>>(responseString)
             );
         }
 
-       
 
-        
+        public IUser MockLogin(UserCredentials credentials)
+        {
+            if (credentials.complete())
+            {
+                // check if user is registered
+                if (userdict.ContainsKey(credentials.Email))
+                {
+                    return TestUtil.MockPasswdCheck(credentials.Password, userdict[credentials.Email]);
+                }
+                throw new ArgumentException();
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+        }
+
+        private async Task<UserCredentials> Login()
+        {
+            UserCredentials credentials = new UserCredentials("test5@email.de", "hunter12");
+            JsonContent content = JsonContent.Create(credentials);
+
+            Uri uriLogin = new Uri("https://localhost:5001/auth/login");
+            var response = await _client.PostAsync(uriLogin.AbsoluteUri, content);
+            var result = response.Content.ReadAsStringAsync().Result;
+            var user = JsonConvert.DeserializeObject<User>(result);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            IEnumerable<string> cookies = response.Headers.SingleOrDefault(header => header.Key == "Set-Cookie").Value;
+            string jwt = cookies.First(s => s.StartsWith("jwt"));
+            jwt = jwt.Split(";").First(s => s.StartsWith("jwt")).Replace("jwt=", "");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+            _client.DefaultRequestHeaders.Add("Cookie", jwt);
+            return credentials;
+        }
+
+
+        private List<TymelineObject> mockTymelineReturnByTime(int start, int end)
+        {
+
+            var s = tymelineList.Where(element => start < element.Start + element.Length && start > element.Start + element.Length).ToList();
+            s.AddRange(tymelineList.Where(element => start < element.Start && element.Start < end).ToList());
+            return s.Distinct().ToList();
+        }
+
+        private TymelineObject mockTymelineReturnById(string identifier)
+
+        {
+
+            var results = tymelineList.Where(element => element.Id.Equals(identifier)).ToList();
+            // var results = from obj in array where obj.Id.Equals(identifier) select obj; 
+
+            switch (results.Count())
+            {
+                case 1:
+                    return results[0];
+                case 0:
+                    throw new ArgumentException("key does not exist in the result");
+                default:
+                    throw new ArgumentException("doesnt make sense!");
+            }
+        }
+
     }
 }
 

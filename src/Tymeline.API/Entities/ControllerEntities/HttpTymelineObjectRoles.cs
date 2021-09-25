@@ -13,3 +13,7 @@ public record HttpTymelineObjectRolesIncrement{
 }
 
 
+public record HttpTymelineObjectWithRole{
+    public List<Role> Roles{get;set;}
+    public TymelineObject tymelineObject {get;set;}
+}

@@ -8,6 +8,22 @@ using MySql.Data.MySqlClient;
 public class TestUtil
 {
 
+
+    public static IUserRoles mockGetUserPermissions(string email){
+            var UserPermissions = new UserRoles(email, new List<IRole>());
+            UserPermissions.Roles.Add(new Role("Frontend","value"));
+            return UserPermissions;
+        }
+
+    public static IUser MockPasswdCheck(string Password, IUser BaseUser){
+        return BaseUser.verifyPassword(Password);
+    }
+
+    public static TymelineObject mockCreateTymelineObject(TymelineObject tO){
+        tO.Id = Guid.NewGuid().ToString();
+        return tO;
+    }
+
     private static Random random = new Random();
 
     public static string RandomString(int length)

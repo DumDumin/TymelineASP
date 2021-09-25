@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using ApiServer.Policies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -40,17 +43,19 @@ namespace Tymeline.API
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["AppSettings:Secret"]));
 
+
+
+            // services.AddSingleton<IAuthorizationHandler>(new CustomAuthReqs());
             services.AddSingleton<IAuthorizationMiddlewareResultHandler,
                           CustomAuthenticationResultHandler>();
 
             
             services.AddAuthorization(options => {
                 options.AddPolicy("CanAffectRoles", policy => policy.RequireClaim("CanAffectRoles"));
+                options.AddPolicy("true",policy => {
+                    policy.Requirements.Add(new CustomRoleRequirement());
+                });
             });
-
-
-
-    
 
             services.AddAuthentication(options =>  
             {  
@@ -63,7 +68,10 @@ namespace Tymeline.API
                 config.Events = new JwtBearerEvents
                 {
 
-                    OnMessageReceived = IntegrateCookiesAsJWTBearer()
+                    OnMessageReceived = IntegrateCookiesAsJWTBearer(),
+                    OnChallenge = JWTChallange(),
+                    OnTokenValidated = TokenValidated()
+                    
                 };
 
                 config.RequireHttpsMetadata = false;
@@ -81,6 +89,7 @@ namespace Tymeline.API
 
             });
 
+            services.AddSingleton<IAuthorizationHandler,CustomAuthReqs>();
             
             services.AddTransient<MySqlConnection>(_ => new MySqlConnection(Configuration["AppSettings:SqlConnection:MySqlConnectionString"]));
             services.AddSingleton<IDataRolesDao,DataRolesDao>();
@@ -98,6 +107,41 @@ namespace Tymeline.API
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tymeline.API", Version = "v1" });
             });
+        }
+
+
+        private static Func<TokenValidatedContext, Task> TokenValidated(){
+            return context => {
+                context.Success();
+                return Task.CompletedTask;
+            };
+        }
+        private static Func<JwtBearerChallengeContext, Task> JWTChallange(){
+            return context => 
+                {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+
+                // Ensure we always have an error and error description.
+                if (string.IsNullOrEmpty(context.Error))
+                    context.Error = "invalid_token";
+                if (string.IsNullOrEmpty(context.ErrorDescription))
+                    context.ErrorDescription = "This request requires a valid JWT access token to be provided";
+
+                // Add some extra context for expired tokens.
+                if (context.AuthenticateFailure != null && context.AuthenticateFailure.GetType() == typeof(SecurityTokenExpiredException))
+                {
+                    var authenticationException = context.AuthenticateFailure as SecurityTokenExpiredException;
+                    context.Response.Headers.Add("x-token-expired", authenticationException.Expires.ToString("o"));
+                    context.ErrorDescription = $"The token expired on {authenticationException.Expires.ToString("o")}";
+                }
+
+                return context.Response.WriteAsync(JsonSerializer.Serialize(new
+                {
+                    error = context.Error,
+                    error_description = context.ErrorDescription
+                }));
+            };
         }
 
         private static Func<MessageReceivedContext, Task> IntegrateCookiesAsJWTBearer()

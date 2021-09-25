@@ -98,6 +98,8 @@ namespace Tymeline.API.Controllers
             }
         }
 
+        // [Authorize("true")]
+        [Authorize]
         [HttpGet]
         [Route("userInfo")]
         public ActionResult<IUserRoles> userInfo()

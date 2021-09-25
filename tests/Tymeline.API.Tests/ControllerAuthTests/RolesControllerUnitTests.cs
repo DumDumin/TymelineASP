@@ -57,7 +57,7 @@ namespace Tymeline.API.Tests
             _authService = new Moq.Mock<IAuthService>();
             _utilService = new UtilService();
             _rolesService = new Mock<IDataRolesService>();
-            _jwtService = new JwtService(_rolesService.Object, _appSettingsOptions);
+            _jwtService = new JwtService(_authService.Object, _appSettingsOptions);
 
 
             roleList = TestUtil.CreateRoleList();
@@ -90,21 +90,22 @@ namespace Tymeline.API.Tests
             _rolesService.Setup(s => s.RemoveUserRole(It.IsAny<IUserRole>())).Returns((IUserRole userRole) => MockRemoveUserRole(userRole.Email, userRole.Role));
             _rolesService.Setup(s => s.AddRoleToItem(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole role, string to) => mockAddRoleToItem(role,to));
             _rolesService.Setup(s => s.RemoveRoleFromItem(It.IsAny<IRole>(),It.IsAny<string>())).Returns((IRole role, string to) => mockRemoveRoleFromItem(role,to));
-            _authService.Setup(s => s.getUsers()).Returns(() => MockGetUsers());
             _rolesService.Setup(s => s.AddRole(It.IsAny<IRole>())).Callback((IRole role)=> MockAddRole(role));
             _rolesService.Setup(s => s.RemoveRole(It.IsAny<IRole>())).Callback((IRole role)=> MockRemoveRole(role));
             _rolesService.Setup(s => s.GetRoles()).Returns(() => MockGetRoles());
+            _authService.Setup(s => s.getUsers()).Returns(() => MockGetUsers());
+            _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => mockGetUserPermissions(email));
         }
 
 
         [SetUp]
-        public void Setup()
+        public async Task SetupAsync()
         {
-           
+           await Login();
         }
 
 
-         [TearDown]
+        [TearDown]
         public void TearDown()
         {
             _client.DefaultRequestHeaders.Clear();

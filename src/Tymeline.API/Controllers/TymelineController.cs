@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -20,13 +21,15 @@ namespace Tymeline.API.Controllers
 
         private readonly ILogger _logger;
         private readonly ITymelineService _timelineService;
+        private readonly IDataRolesService _rolesService;
 
-        public TymelineController( ITymelineService timelineService )
+        public TymelineController( ITymelineService timelineService, IDataRolesService rolesService )
         {
             _timelineService = timelineService;
+            _rolesService = rolesService;
         }
 
-
+        [Authorize]
         [HttpGet]
         [Route("get")]
         public List<TymelineObject> getAllTymelineObjects()
@@ -34,7 +37,7 @@ namespace Tymeline.API.Controllers
             return _timelineService.GetAll();
         }
 
-
+        [Authorize]
         [HttpGet]
         [Route("getbytime/{start}-{end}")]
         public List<TymelineObject> GetByTime(int start, int end)
@@ -42,7 +45,7 @@ namespace Tymeline.API.Controllers
             return _timelineService.GetByTime(start, end);
         }
 
-        
+        [Authorize]
         [HttpGet]
         [Route("get/{id}")]
         public ActionResult<TymelineObject> GetTymelineObjectsByKey(string id)
@@ -65,18 +68,24 @@ namespace Tymeline.API.Controllers
             
         }
 
+        [Authorize]
         [HttpPost]
         [Route("create")]
-        public ActionResult<TymelineObject> CreateTymelineObject([FromBody] TymelineObject tymelineObject)
+        public ActionResult<TymelineObject> CreateTymelineObject([FromBody] HttpTymelineObjectWithRole tymelineObjectWithRole)
         {   
             try
             {
-                return StatusCode(201, _timelineService.Create(tymelineObject));
-            }
 
-            catch(System.AccessViolationException)
-            {
-                return StatusCode(204);
+
+                List<Claim> ToClaims = tymelineObjectWithRole.Roles.ConvertAll<Claim>(role => new Claim(role.Type,role.Value));  
+                // User.Claims.Contains()
+                // check if User has Permissions to use the Roles
+                // reject if not
+                // reject if roles are not created!
+                // create item
+                // assign item to roles!
+
+                return StatusCode(201, _timelineService.Create(tymelineObjectWithRole.tymelineObject));
             }
             catch (System.Exception)
             {
@@ -85,6 +94,7 @@ namespace Tymeline.API.Controllers
         }
 
 
+        [Authorize]
         [HttpPost]
         [Route("delete")]
         public ActionResult<TymelineObject> DeletetymelineObjectById([FromBody]string id)
@@ -100,6 +110,7 @@ namespace Tymeline.API.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost]
         [Route("update")]
         public ActionResult<TymelineObject> UpdateTymelineObjectById([FromBody] IUpdateTymelineObject data){
