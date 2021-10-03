@@ -117,7 +117,7 @@ namespace Tymeline.API.Tests
             TymelineObject tymelineObject = new TymelineObject(189890,new Content("testContent"),10000000,false,false);
             Role r = new Role("item","personal");
             List<Role> roles  = new List<Role>();
-            HttpTymelineObjectWithRole to = new HttpTymelineObjectWithRole{tymelineObject= tymelineObject, Roles = roles };
+            HttpTymelineObjectWithRoles to = new HttpTymelineObjectWithRoles{tymelineObject= tymelineObject, Roles = roles };
             JsonContent content =  JsonContent.Create(to);
 
 
@@ -135,7 +135,7 @@ namespace Tymeline.API.Tests
             tymelineObject.Id.Should().BeNull();
             Role r = new Role("item","personal");
             List<Role> roles  = new List<Role>();
-            HttpTymelineObjectWithRole to = new HttpTymelineObjectWithRole{tymelineObject= tymelineObject, Roles = roles };
+            HttpTymelineObjectWithRoles to = new HttpTymelineObjectWithRoles{tymelineObject= tymelineObject, Roles = roles };
             JsonContent content =  JsonContent.Create(to);
 
 

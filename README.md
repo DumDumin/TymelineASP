@@ -26,22 +26,30 @@ Thinking about how to delegate rights:
 assign and revoke
 who can create Data?
 - any account
+
 who can assign Data to Roles?
 - any User in Role
 - any User in Supervisory Role
+
 who can assign Roles to Users?
 - any User in Supervisory Role
+
 who can access Roles for users?
 - the specific User
+
 who can access Data for Roles?
 - any user with these Roles
+
 who can access Data for Users?
 - the specific User
+
 who can delete Data?
 - Any user who is member of all Roles with access to the Item
 - if a user can remove data for different Roles, that is unexpected
+
 who can delete Roles?
 - Any User who is in supervisory role to all of these Roles
+
 who can delete Users?
 - User in Supervisory Role to that User
 
@@ -58,3 +66,7 @@ define Supervisory Role
 
 ```
 ``` 
+
+
+
+write tests for this!

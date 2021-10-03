@@ -25,7 +25,9 @@ namespace Tymeline.API.Tests
         private Moq.Mock<ITymelineService> _tymelineService;
         private Moq.Mock<IAuthService> _authService;
 
-        Dictionary<string, IUser> userdict;
+        public TestState state;
+
+        Moq.Mock<IDataRolesService> _dataRolesService;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -33,6 +35,8 @@ namespace Tymeline.API.Tests
             _factory = new WebApplicationFactory<Startup>();
             _tymelineService = new Moq.Mock<ITymelineService>();
             _authService = new Mock<IAuthService>();
+            _dataRolesService = new Moq.Mock<IDataRolesService>();
+
 
             _client = _factory.WithWebHostBuilder(builder =>
             {
@@ -40,17 +44,28 @@ namespace Tymeline.API.Tests
                 {
                     services.AddScoped<ITymelineService>(s => _tymelineService.Object);
                     services.AddTransient<IAuthService>(s => _authService.Object);
+                    services.AddScoped<IDataRolesService>(s => _dataRolesService.Object);
                 });
             }).CreateClient();
-            userdict = TestUtil.createUserDict();
-            _tymelineService.Setup(s => s.UpdateById(It.IsAny<string>(), It.IsAny<TymelineObject>())).Returns((string id, TymelineObject cc) => MockUpdateById(id, cc));
+
+            state = new TestState();
+            // tymelineList = TestUtil.setupTymelineList();
+            // roleList = TestUtil.CreateRoleList();
+            // userdict = TestUtil.createUserDict();
+            // userRoles = TestUtil.createRoleDict(userdict, roleList);
+
+            // tymelineObjectRoles = TestUtil.setupRoles(tymelineList, roleList);
+            _tymelineService.Setup(s => s.GetAllForUser(It.IsAny<string>(), It.IsAny<Roles>())).Returns((string userId, Roles minRole) => state.mockGetAll(userId, minRole));
+            _tymelineService.Setup(s => s.UpdateById(It.IsAny<string>(), It.IsAny<TymelineObject>())).Returns((string id, TymelineObject cc) => state.MockUpdateById(id, cc));
             _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => TestUtil.mockGetUserPermissions(email));
-            _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
+            _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => state.MockLogin(cc));
+            _dataRolesService.Setup(s => s.UserHasAccessToItem(It.IsAny<string>(), It.IsAny<string>())).Returns((string email, string itemId) => state.MockHasAccessToItem(email, itemId));
+
         }
 
         [SetUp]
         public async Task SetUpAsync()
-        {   
+        {
             await Login();
         }
 
@@ -58,16 +73,18 @@ namespace Tymeline.API.Tests
         public void TearDown()
         {
             _client.DefaultRequestHeaders.Clear();
-         
+
         }
 
 
         [Test]
         public async Task Test_TymelineUpdate_With_Existing_Entry_Returns_Existing_Entry_And_200()
         {
-            TymelineObject tymelineObject = new TymelineObject("1", 189890, new Content("testContent"), 10000000, false, false);
+            var userObjects = await getAll();
+            var randomId = userObjects.RandomElement().Id;
+            TymelineObject tymelineObject = new TymelineObject(randomId, 189890, new Content("testContent"), 10000000, false, false);
             var obj = new IUpdateTymelineObject();
-            obj.Id = "1";
+            obj.Id = randomId;
             obj.tymelineObject = tymelineObject;
             var content = JsonContent.Create(obj);
 
@@ -78,7 +95,7 @@ namespace Tymeline.API.Tests
         }
 
         [Test]
-        public async Task Test_TymelineUpdate_With_New_Entry_Returns_New_Entry_And_201()
+        public async Task Test_TymelineUpdate_With_New_Entry_Returns_New_Entry_And_403()
         {
             TymelineObject tymelineObject = new TymelineObject("999", 189890, new Content("testContent"), 10000000, false, false);
             var obj = new IUpdateTymelineObject();
@@ -89,25 +106,7 @@ namespace Tymeline.API.Tests
             var response = await _client.PostAsync($"https://localhost:5001/tymeline/update", content);
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.OK, statusCode);
-        }
-
-
-        public IUser MockLogin(UserCredentials credentials)
-        {
-            if (credentials.complete())
-            {
-                // check if user is registered
-                if (userdict.ContainsKey(credentials.Email))
-                {
-                    return TestUtil.MockPasswdCheck(credentials.Password, userdict[credentials.Email]);
-                }
-                throw new ArgumentException();
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
+            Assert.AreEqual(HttpStatusCode.Forbidden, statusCode);
         }
 
 
@@ -129,16 +128,12 @@ namespace Tymeline.API.Tests
             return credentials;
         }
 
-        TymelineObject MockUpdateById(string id, TymelineObject tymelineObject)
+        private async Task<List<TymelineObject>> getAll()
         {
-            if (id == tymelineObject.Id)
-            {
-                return tymelineObject;
-            }
-            else
-            {
-                throw new ArgumentException("the id and the passed in object do not match!");
-            }
+
+            var response = await _client.GetAsync("https://localhost:5001/tymeline/get");
+            var responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<TymelineObject>>(responseString);
         }
     }
 }

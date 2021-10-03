@@ -15,8 +15,16 @@ public static class CollectionExtension
 
     public static T RandomElementWithout<T>(this IList<T> list, IList<T> exceptions)
     {
-        exceptions.ToList().ForEach(ex => list.Remove(ex));
-        return list[rng.Next(list.Count)];
+        List<T> newList = new List<T>(list);
+        exceptions.ToList().ForEach(ex => newList.Remove(ex));
+        return newList[rng.Next(newList.Count)];
+    }
+
+        public static T RandomElementWithout<T>(this IList<T> list, T exception)
+    {
+        List<T> newList = new List<T>(list);
+        newList.Remove(exception);
+        return newList[rng.Next(newList.Count)];
     }
 
 

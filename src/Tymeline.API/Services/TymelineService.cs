@@ -2,42 +2,59 @@ using System;
 using System.Collections.Generic;
 using Tymeline.API.Daos;
 
-public class TymelineService : ITymelineService{
+public class TymelineService : ITymelineService
+{
 
     ITymelineObjectDao _tymelineObjectDao;
-    public TymelineService(ITymelineObjectDao tymelineObjectDao){
+    public TymelineService(ITymelineObjectDao tymelineObjectDao)
+    {
         _tymelineObjectDao = tymelineObjectDao;
     }
-    public List<TymelineObject> GetAll(){
+
+    public List<TymelineObject> GetAllForUser(string UserId, Roles minRole)
+    {
         return _tymelineObjectDao.getAll();
     }
 
-    public TymelineObject GetById(string id){
+    public List<TymelineObject> GetAll()
+    {
+        return _tymelineObjectDao.getAll();
+    }
+
+    public TymelineObject GetById(string id)
+    {
         return _tymelineObjectDao.getById(id);
     }
 
-    public TymelineObject Create(TymelineObject tymelineObject){
+    public TymelineObject Create(TymelineObject tymelineObject)
+    {
         return _tymelineObjectDao.Create(tymelineObject);
     }
-    public TymelineObject UpdateById(string id,TymelineObject tymelineObject){
+    public TymelineObject UpdateById(string id, TymelineObject tymelineObject)
+    {
 
-        try{
-            if(id.Equals(tymelineObject.Id)){
-                return _tymelineObjectDao.UpdateById(id,tymelineObject);
+        try
+        {
+            if (id.Equals(tymelineObject.Id))
+            {
+                return _tymelineObjectDao.UpdateById(id, tymelineObject);
             }
             throw new ArgumentException();
         }
-       
-         catch(System.Exception){
+
+        catch (System.Exception)
+        {
             throw new ArgumentException();
         }
     }
-    public void DeleteById(string id){
+    public void DeleteById(string id)
+    {
         _tymelineObjectDao.DeleteById(id);
     }
 
-    public List<TymelineObject> GetByTime(int start, int end){
-        return _tymelineObjectDao.getByTime(start,end);
+    public List<TymelineObject> GetByTime(int start, int end)
+    {
+        return _tymelineObjectDao.getByTime(start, end);
     }
 
 

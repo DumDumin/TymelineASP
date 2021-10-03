@@ -8,3 +8,8 @@ public class UtilService {
 }
 
 
+public enum Roles{
+    admin, 
+    supervisor,
+    user
+}

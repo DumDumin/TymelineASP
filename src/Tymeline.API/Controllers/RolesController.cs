@@ -51,10 +51,12 @@ namespace Tymeline.API.Controllers
             try
             {
                 // returns the permissions for some user
+
                 // TODO should only be allowed for certain roles!
                 IUserRoles s = _dataRolesService.GetUserRoles(email);
                 var returnObject = new HttpUserRoles(s.Email, s.Roles.ConvertAll(o => (Role)o));
                 return StatusCode(200, returnObject);
+
             }
             catch (System.Exception)
             {
@@ -62,6 +64,8 @@ namespace Tymeline.API.Controllers
                 return StatusCode(500);
             }
         }
+
+
         [Authorize]
         [HttpGet]
         [Route("getroles/item/{item}")]
@@ -69,10 +73,18 @@ namespace Tymeline.API.Controllers
         {
             try
             {
-                // returns the permissions for some item
-                ITymelineObjectRoles s = _dataRolesService.GetItemRoles(item);
-                HttpTymelineObjectRoles returnObject = new HttpTymelineObjectRoles { tymelineObjectId = s.TymelineObject, Roles = s.Roles.ConvertAll(o => (Role)o) };
-                return StatusCode(200, returnObject);
+                if (_dataRolesService.UserHasAccessToItem(User.Identity.Name, item, Roles.supervisor))
+                {
+
+                    // returns the permissions for some item
+                    ITymelineObjectRoles s = _dataRolesService.GetItemRoles(item);
+                    HttpTymelineObjectRoles returnObject = new HttpTymelineObjectRoles { tymelineObjectId = s.TymelineObject, Roles = s.Roles.ConvertAll(o => (Role)o) };
+                    return StatusCode(200, returnObject);
+                }
+                else
+                {
+                    return StatusCode(403);
+                }
             }
             catch (System.Exception)
             {
@@ -98,7 +110,7 @@ namespace Tymeline.API.Controllers
             }
         }
 
-        // [Authorize("true")]
+
         [Authorize]
         [HttpGet]
         [Route("userInfo")]

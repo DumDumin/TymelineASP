@@ -69,7 +69,6 @@ namespace Tymeline.API
                 {
 
                     OnMessageReceived = IntegrateCookiesAsJWTBearer(),
-                    OnChallenge = JWTChallange(),
                     OnTokenValidated = TokenValidated()
                     
                 };

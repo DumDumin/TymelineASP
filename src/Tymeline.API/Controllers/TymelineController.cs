@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace Tymeline.API.Controllers
         private readonly ITymelineService _timelineService;
         private readonly IDataRolesService _rolesService;
 
-        public TymelineController( ITymelineService timelineService, IDataRolesService rolesService )
+        public TymelineController(ITymelineService timelineService, IDataRolesService rolesService)
         {
             _timelineService = timelineService;
             _rolesService = rolesService;
@@ -34,7 +35,17 @@ namespace Tymeline.API.Controllers
         [Route("get")]
         public List<TymelineObject> getAllTymelineObjects()
         {
-            return _timelineService.GetAll();
+            return _timelineService.GetAllForUser(User.Identity.Name, Roles.user);
+        }
+
+
+
+        [Authorize]
+        [HttpGet]
+        [Route("getsuper")]
+        public List<TymelineObject> getAllTymelineObjectsWithSupervisorRights()
+        {
+            return _timelineService.GetAllForUser(User.Identity.Name, Roles.supervisor);
         }
 
         [Authorize]
@@ -49,35 +60,43 @@ namespace Tymeline.API.Controllers
         [HttpGet]
         [Route("get/{id}")]
         public ActionResult<TymelineObject> GetTymelineObjectsByKey(string id)
-        {   
-            
+        {
+
             try
             {
-                TymelineObject obj = _timelineService.GetById(id);
-                return StatusCode(200,obj);
-                
+                if (_rolesService.UserHasAccessToItem(User.Identity.Name, id))
+                {
+
+                    TymelineObject obj = _timelineService.GetById(id);
+                    return StatusCode(200, obj);
+                }
+                else
+                {
+                    return StatusCode(403, "User cannot access the requested Item");
+                }
+
             }
             catch (ArgumentException)
             {
-                return  StatusCode(204,null);
+                return StatusCode(403, "User cannot access the requested Item");
             }
-            catch(System.Exception)
+            catch (System.Exception)
             {
                 return StatusCode(500);
             }
-            
+
         }
 
         [Authorize]
         [HttpPost]
         [Route("create")]
-        public ActionResult<TymelineObject> CreateTymelineObject([FromBody] HttpTymelineObjectWithRole tymelineObjectWithRole)
-        {   
+        public ActionResult<TymelineObject> CreateTymelineObject([FromBody] HttpTymelineObjectWithRoles tymelineObjectWithRole)
+        {
             try
             {
 
 
-                List<Claim> ToClaims = tymelineObjectWithRole.Roles.ConvertAll<Claim>(role => new Claim(role.Type,role.Value));  
+                List<Claim> ToClaims = tymelineObjectWithRole.Roles.ConvertAll<Claim>(role => new Claim(role.Type, role.Value));
                 // User.Claims.Contains()
                 // check if User has Permissions to use the Roles
                 // reject if not
@@ -97,40 +116,62 @@ namespace Tymeline.API.Controllers
         [Authorize]
         [HttpPost]
         [Route("delete")]
-        public ActionResult<TymelineObject> DeletetymelineObjectById([FromBody]string id)
-        {   
+        public ActionResult<TymelineObject> DeletetymelineObjectById([FromBody] string id)
+        {
             try
             {
-                _timelineService.DeleteById(id);
-                return StatusCode(204);
+                if (_rolesService.UserHasAccessToItem(User.Identity.Name, id))
+                {
+
+                    _timelineService.DeleteById(id);
+                    return StatusCode(200);
+                }
+                else
+                {
+                    return StatusCode(403);
+                }
             }
             catch (System.Exception)
             {
-                return StatusCode(500);
+                return StatusCode(403);
             }
         }
 
         [Authorize]
         [HttpPost]
         [Route("update")]
-        public ActionResult<TymelineObject> UpdateTymelineObjectById([FromBody] IUpdateTymelineObject data){
-            
+        public ActionResult<TymelineObject> UpdateTymelineObjectById([FromBody] IUpdateTymelineObject data)
+        {
+
             try
             {
-                if(data.Id.Equals(data.tymelineObject.Id)){
-                    var updatedTymelineObject = _timelineService.UpdateById(data.Id,data.tymelineObject);
-                    return StatusCode(200,updatedTymelineObject);
+
+                if (_rolesService.UserHasAccessToItem(User.Identity.Name, data.Id))
+                {
+
+                    if (data.Id.Equals(data.tymelineObject.Id))
+                    {
+
+                        var updatedTymelineObject = _timelineService.UpdateById(data.Id, data.tymelineObject);
+                        return StatusCode(200, updatedTymelineObject);
+
+                    }
+                    else
+                    {
+                        return StatusCode(500, "sent ids dont match");
+                    }
 
                 }
-                else{
-                    return StatusCode(500,"sent ids dont match");
+                else
+                {
+                    return StatusCode(403, "User has no permission to access the requested Item");
                 }
             }
 
-            
+
             catch (System.Exception)
             {
-                
+
                 return StatusCode(500);
             }
         }

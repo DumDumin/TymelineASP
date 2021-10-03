@@ -21,6 +21,7 @@ using System.Security.Principal;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using FluentAssertions;
 
 namespace Tymeline.API.Tests
 {
@@ -30,12 +31,10 @@ namespace Tymeline.API.Tests
     {
         private WebApplicationFactory<Startup> _factory;
         private HttpClient _client;
+        private TestState state;
         private Moq.Mock<ITymelineService> _tymelineService;
         private Moq.Mock<IAuthService> _authService;
-
-        private List<TymelineObject> tymelineList;
-
-        Dictionary<string, IUser> userdict;
+        private Mock<IDataRolesService> _dataRolesService;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -43,26 +42,31 @@ namespace Tymeline.API.Tests
             _factory = new WebApplicationFactory<Startup>();
             _tymelineService = new Moq.Mock<ITymelineService>();
             _authService = new Mock<IAuthService>();
-            tymelineList = TestUtil.setupTymelineList();
+            _dataRolesService = new Mock<IDataRolesService>();
+
             _client = _factory.WithWebHostBuilder(builder =>
             {
                 builder.ConfigureTestServices(services =>
                 {
                     services.AddScoped<ITymelineService>(s => _tymelineService.Object);
                     services.AddTransient<IAuthService>(s => _authService.Object);
+                    services.AddTransient<IDataRolesService>(s => _dataRolesService.Object);
                 });
             }).CreateClient();
-            userdict = TestUtil.createUserDict();
-            _tymelineService.Setup(s => s.GetById(It.IsAny<string>())).Returns((string key) => mockTymelineReturnById(key));
-            _tymelineService.Setup(s => s.GetByTime(It.IsAny<int>(), It.IsAny<int>())).Returns((int start, int end) => mockTymelineReturnByTime(start, end));
+            state = new TestState();
+            _tymelineService.Setup(s => s.GetById(It.IsAny<string>())).Returns((string key) => state.MockTymelineReturnById(key));
+            _tymelineService.Setup(s => s.GetByTime(It.IsAny<int>(), It.IsAny<int>())).Returns((int start, int end) => state.MockTymelineReturnByTime(start, end));
             _authService.Setup(s => s.GetUserRoles(It.IsAny<string>())).Returns((string email) => TestUtil.mockGetUserPermissions(email));
-            _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => MockLogin(cc));
+            _authService.Setup(s => s.Login(It.IsAny<IUserCredentials>())).Returns((UserCredentials cc) => state.MockLogin(cc));
+            // _tymelineService.Setup(s => s.GetAll()).Returns(state.tymelineList);
+            _tymelineService.Setup(s => s.GetAllForUser(It.IsAny<string>(), It.IsAny<Roles>())).Returns((string email, Roles minRole) => state.mockGetAll(email, minRole));
+            _dataRolesService.Setup(s => s.UserHasAccessToItem(It.IsAny<string>(), It.IsAny<string>())).Returns((string email, string itemId) => state.MockHasAccessToItem(email, itemId));
         }
 
 
         [SetUp]
         public async Task SetUpAsync()
-        {   
+        {
             await Login();
         }
 
@@ -70,71 +74,59 @@ namespace Tymeline.API.Tests
         public void TearDown()
         {
             _client.DefaultRequestHeaders.Clear();
-         
+
         }
 
 
         [Test]
         public async Task Test_TymelinegetAll_returnsValidJSON_forListTymelineObject()
         {
-            _tymelineService.Setup(s => s.GetAll()).Returns(tymelineList);
             var response = await _client.GetAsync("https://localhost:5001/tymeline/get");
             var responseString = await response.Content.ReadAsStringAsync();
-
-            Assert.AreEqual(tymelineList, JsonConvert.DeserializeObject<List<TymelineObject>>(responseString));
+            var tOList = JsonConvert.DeserializeObject<List<TymelineObject>>(responseString);
+            state.tymelineList.Should().Contain(tOList[0]);
+            tOList.Select(to => state.tymelineList.Should().Contain(to));
+            // JsonConvert.DeserializeObject<List<TymelineObject>>(responseString).Should().BeSubsetOf(state.tymelineList);
+            JsonConvert.DeserializeObject<List<TymelineObject>>(responseString).Should().HaveCountLessOrEqualTo(state.tymelineList.Count);
         }
 
 
         [Test]
         public async Task Test_TymelinegetById_returnsValidJSON_forTymelineObject()
         {
+            var userObjects = await getAll();
+            var randomId = userObjects.RandomElement().Id;
 
-            string key = "2";
-            var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
+            var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{randomId}");
             var responseString = await response.Content.ReadAsStringAsync();
-            // ugly testing code . fix this!
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-            Assert.AreEqual(mockTymelineReturnById(key),
-            JsonConvert.DeserializeObject<TymelineObject>(responseString));
+            state.MockTymelineReturnById(randomId).Should().BeEquivalentTo(JsonConvert.DeserializeObject<TymelineObject>(responseString));
         }
 
         [Test]
-        public async Task Test_TymelineById_returns_204_forNotExistingElement()
+        public async Task Test_TymelineById_returns_403_forNotExistingElement()
         {
 
             string key = "105";
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
-            var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.NoContent, statusCode);
+            response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         }
 
 
         [Test]
-        public async Task Test_TymelineById_returns_204_forNotExistingElement_WithMockedException()
+        public async Task Test_TymelineById_returns_403_forNotExistingElement_WithMockedException()
         {
-            string key = "99";
+            string key = "199";
 
             _tymelineService.Setup(s => s.GetById(key)).Throws(new ArgumentException());
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
             var responseString = await response.Content.ReadAsStringAsync();
-            var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.NoContent, statusCode);
+            response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
         }
 
 
-        [Test]
-        public async Task Test_TymelineById_returns_500_forBackendError()
-        {
-
-            string key = "99";
-
-            _tymelineService.Setup(s => s.GetById(key)).Throws(new KeyNotFoundException());
-            var response = await _client.GetAsync($"https://localhost:5001/tymeline/get/{key}");
-            var responseString = await response.Content.ReadAsStringAsync();
-            var statusCode = response.StatusCode;
-            Assert.AreEqual(HttpStatusCode.InternalServerError, statusCode);
-        }
 
 
         [Test]
@@ -159,27 +151,11 @@ namespace Tymeline.API.Tests
             var response = await _client.GetAsync($"https://localhost:5001/tymeline/getbytime/{start}-{end}");
             var responseString = await response.Content.ReadAsStringAsync();
             var statusCode = response.StatusCode;
-            Assert.AreEqual(mockTymelineReturnByTime(start, end), JsonConvert.DeserializeObject<List<TymelineObject>>(responseString)
-            );
+            state.MockTymelineReturnByTime(start, end)
+            .Should()
+            .BeEquivalentTo(JsonConvert.DeserializeObject<List<TymelineObject>>(responseString));
         }
 
-
-        public IUser MockLogin(UserCredentials credentials)
-        {
-            if (credentials.complete())
-            {
-                // check if user is registered
-                if (userdict.ContainsKey(credentials.Email))
-                {
-                    return TestUtil.MockPasswdCheck(credentials.Password, userdict[credentials.Email]);
-                }
-                throw new ArgumentException();
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
-        }
 
         private async Task<UserCredentials> Login()
         {
@@ -199,31 +175,12 @@ namespace Tymeline.API.Tests
             return credentials;
         }
 
-
-        private List<TymelineObject> mockTymelineReturnByTime(int start, int end)
+        private async Task<List<TymelineObject>> getAll()
         {
 
-            var s = tymelineList.Where(element => start < element.Start + element.Length && start > element.Start + element.Length).ToList();
-            s.AddRange(tymelineList.Where(element => start < element.Start && element.Start < end).ToList());
-            return s.Distinct().ToList();
-        }
-
-        private TymelineObject mockTymelineReturnById(string identifier)
-
-        {
-
-            var results = tymelineList.Where(element => element.Id.Equals(identifier)).ToList();
-            // var results = from obj in array where obj.Id.Equals(identifier) select obj; 
-
-            switch (results.Count())
-            {
-                case 1:
-                    return results[0];
-                case 0:
-                    throw new ArgumentException("key does not exist in the result");
-                default:
-                    throw new ArgumentException("doesnt make sense!");
-            }
+            var response = await _client.GetAsync("https://localhost:5001/tymeline/get");
+            var responseString = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<TymelineObject>>(responseString);
         }
 
     }
